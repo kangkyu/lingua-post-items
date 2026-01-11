@@ -21,7 +21,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('Translation request - projectId:', projectId, 'location:', location);
     const request = {
       parent: `projects/${projectId}/locations/${location}`,
       contents: [text],
