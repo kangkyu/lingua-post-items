@@ -45,4 +45,4 @@ build:
   outputDirectory: backend
   
   # Start command
-  startCommand: npm start
+  startCommand: node server.js
