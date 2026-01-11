@@ -81,38 +81,36 @@ const Share = () => {
     }
   }, [isEditMode, editId]);
 
-  // Debounced translation suggestion
-  useEffect(() => {
+  const handleTranslate = async () => {
     if (!formData.originalText || !formData.targetLanguage) {
-      setSuggestion('');
+      alert('Please enter the original text and a target language.');
       return;
     }
+    setIsFetchingSuggestion(true);
+    setSuggestion('');
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: formData.originalText,
+          targetLanguage: formData.targetLanguage
+        })
+      });
 
-    const timer = setTimeout(async () => {
-      setIsFetchingSuggestion(true);
-      try {
-        const response = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: formData.originalText,
-            targetLanguage: formData.targetLanguage
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSuggestion(data.translatedText);
-        }
-      } catch (error) {
-        console.error('Suggestion fetch error:', error);
-      } finally {
-        setIsFetchingSuggestion(false);
+      if (!response.ok) {
+        throw new Error('Translation failed');
       }
-    }, 500);
 
-    return () => clearTimeout(timer);
-  }, [formData.originalText, formData.targetLanguage]);
+      const data = await response.json();
+      setSuggestion(data.translatedText);
+    } catch (error) {
+      console.error('Translation error:', error);
+      alert('Failed to translate text. Please try again.');
+    } finally {
+      setIsFetchingSuggestion(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -325,9 +323,22 @@ const Share = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Your Translation
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Your Translation
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleTranslate}
+                  disabled={isFetchingSuggestion}
+                  className="text-teal-600 hover:text-teal-700"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {isFetchingSuggestion ? 'Translating...' : 'Translate'}
+                </Button>
+              </div>
 
               {/* Machine translation suggestion */}
               {(suggestion || isFetchingSuggestion) && (
