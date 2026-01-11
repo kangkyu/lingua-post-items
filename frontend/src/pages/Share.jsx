@@ -27,8 +27,9 @@ const Share = () => {
   const [books, setBooks] = useState([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suggestion, setSuggestion] = useState('');
+  const [isFetchingSuggestion, setIsFetchingSuggestion] = useState(false);
   const [showCreateBook, setShowCreateBook] = useState(false);
   const [newBookData, setNewBookData] = useState({
     title: '',
@@ -80,6 +81,39 @@ const Share = () => {
     }
   }, [isEditMode, editId]);
 
+  // Debounced translation suggestion
+  useEffect(() => {
+    if (!formData.originalText || !formData.targetLanguage) {
+      setSuggestion('');
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsFetchingSuggestion(true);
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: formData.originalText,
+            targetLanguage: formData.targetLanguage
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSuggestion(data.translatedText);
+        }
+      } catch (error) {
+        console.error('Suggestion fetch error:', error);
+      } finally {
+        setIsFetchingSuggestion(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.originalText, formData.targetLanguage]);
+
   if (!user) {
     return (
       <div className="text-center py-12">
@@ -123,36 +157,6 @@ const Share = () => {
     }
   };
 
-  const handleTranslate = async () => {
-    if (!formData.originalText || !formData.targetLanguage) {
-      alert('Please enter the original text and a target language.');
-      return;
-    }
-    setIsTranslating(true);
-    try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: formData.originalText,
-          targetLanguage: formData.targetLanguage
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Translation failed');
-      }
-
-      const data = await response.json();
-      setFormData({ ...formData, translatedText: data.translatedText });
-    } catch (error) {
-      console.error('Translation error:', error);
-      alert('Failed to translate text. Please try again.');
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -177,12 +181,11 @@ const Share = () => {
         context: formData.context || null
       };
 
-      let result;
       if (isEditMode) {
-        result = await translationService.updateTranslation(editId, translationData, sessionToken);
+        await translationService.updateTranslation(editId, translationData, sessionToken);
         alert('Translation updated successfully!');
       } else {
-        result = await translationService.createTranslation(translationData, sessionToken);
+        await translationService.createTranslation(translationData, sessionToken);
         alert('Translation created successfully!');
       }
 
@@ -322,27 +325,30 @@ const Share = () => {
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-slate-700">
-                  Translation
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleTranslate}
-                  disabled={isTranslating}
-                  className="text-teal-600 hover:text-teal-700"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {isTranslating ? 'Translating...' : 'Translate'}
-                </Button>
-              </div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Your Translation
+              </label>
+
+              {/* Machine translation suggestion */}
+              {(suggestion || isFetchingSuggestion) && (
+                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700">Suggestion</span>
+                  </div>
+                  {isFetchingSuggestion ? (
+                    <p className="text-sm text-amber-600 italic">Translating...</p>
+                  ) : (
+                    <p className="text-sm text-slate-700">{suggestion}</p>
+                  )}
+                </div>
+              )}
+
               <Textarea
                 rows={3}
                 value={formData.translatedText}
                 onChange={(e) => setFormData({ ...formData, translatedText: e.target.value })}
-                placeholder="Enter the translation or use the 'Translate' button..."
+                placeholder="Enter your translation..."
                 required
               />
             </div>
