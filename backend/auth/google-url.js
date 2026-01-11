@@ -5,7 +5,9 @@ export default function handler(req, res) {
   if (handleCors(req, res)) return;
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
   }
 
   try {
@@ -24,9 +26,11 @@ export default function handler(req, res) {
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-    res.json({ authUrl });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ authUrl }));
   } catch (error) {
     console.error('Error generating auth URL:', error);
-    res.status(500).json({ error: 'Failed to generate authentication URL' });
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Failed to generate authentication URL' }));
   }
 }
