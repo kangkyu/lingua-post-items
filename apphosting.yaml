@@ -16,7 +16,7 @@ env:
   - variable: NODE_ENV
     value: production
   - variable: GOOGLE_CLOUD_PROJECT_ID
-    secret: projects/359757699589/secrets/GOOGLE_CLOUD_PROJECT_ID
+    secret: projects/359757699589/secrets/GOOGLE_CLOUD_PROJECT_ID/versions/3
   - variable: DATABASE_URL
     secret: projects/359757699589/secrets/DATABASE_URL
   - variable: DIRECT_URL
