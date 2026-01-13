@@ -29,17 +29,26 @@ const server = http.createServer(async (req, res) => {
   req.query = Object.fromEntries(queryParams.entries());
 
   let filePath = path.join(__dirname, urlPath);
-  
+
+  // First, check if a static .js file exists with this name
+  const staticJsFile = filePath.endsWith('.js') ? filePath : filePath + '.js';
+
   if (!fs.existsSync(filePath) || !fs.lstatSync(filePath).isDirectory()) {
-      const parentDir = path.dirname(filePath);
-      const slug = path.basename(filePath);
-      if (fs.existsSync(parentDir) && fs.lstatSync(parentDir).isDirectory()) {
-          const files = fs.readdirSync(parentDir);
-          const dynamicFile = files.find(file => file.startsWith('[') && file.endsWith('].js'));
-          if (dynamicFile) {
-              const paramName = dynamicFile.slice(1, -4);
-              req.query[paramName] = slug;
-              filePath = path.join(parentDir, dynamicFile);
+      // Check for static .js file first before trying dynamic routes
+      if (fs.existsSync(staticJsFile)) {
+          filePath = staticJsFile;
+      } else {
+          // Try dynamic route
+          const parentDir = path.dirname(filePath);
+          const slug = path.basename(filePath);
+          if (fs.existsSync(parentDir) && fs.lstatSync(parentDir).isDirectory()) {
+              const files = fs.readdirSync(parentDir);
+              const dynamicFile = files.find(file => file.startsWith('[') && file.endsWith('].js'));
+              if (dynamicFile) {
+                  const paramName = dynamicFile.slice(1, -4);
+                  req.query[paramName] = slug;
+                  filePath = path.join(parentDir, dynamicFile);
+              }
           }
       }
   }

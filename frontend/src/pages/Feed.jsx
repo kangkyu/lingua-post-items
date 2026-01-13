@@ -293,22 +293,23 @@ const Feed = () => {
                                 <MessageCircle className="w-3 h-3 mr-1" />
                                 {translation.commentsCount}
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`h-6 px-1 ${
-                                  isBookmarked
-                                    ? 'text-yellow-500 hover:text-yellow-600'
-                                    : 'text-slate-600 hover:text-yellow-600'
-                                }`}
-                                disabled={!user}
-                                onClick={() => handleBookmarkToggle(translation.id)}
-                              >
-                                <Bookmark
-                                  className="w-3 h-3"
-                                  fill={isBookmarked ? 'currentColor' : 'none'}
-                                />
-                              </Button>
+                              {user && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-6 px-1 ${
+                                    isBookmarked
+                                      ? 'text-yellow-500 hover:text-yellow-600'
+                                      : 'text-slate-600 hover:text-yellow-600'
+                                  }`}
+                                  onClick={() => handleBookmarkToggle(translation.id)}
+                                >
+                                  <Bookmark
+                                    className="w-3 h-3"
+                                    fill={isBookmarked ? 'currentColor' : 'none'}
+                                  />
+                                </Button>
+                              )}
                             </div>
                             {user && user.email === translation.translatorEmail && (
                               <Button

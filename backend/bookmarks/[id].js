@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   const user = authResult.user;
-  const bookmarkId = parseInt(req.params.id);
+  const bookmarkId = parseInt(req.query.id);
 
   if (req.method === 'DELETE') {
     try {

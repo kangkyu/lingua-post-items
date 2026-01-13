@@ -105,8 +105,16 @@ export const bookmarkService = {
     });
   },
 
-  async checkBookmark(translationId, sessionToken) {
-    return await apiCall(`/bookmarks/check?translationId=${translationId}`, {
+  async checkBookBookmark(bookId, sessionToken) {
+    return await apiCall(`/bookmarks/check-book?bookId=${bookId}`, {
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  },
+
+  async checkTranslationBookmark(translationId, sessionToken) {
+    return await apiCall(`/bookmarks/check-translation?translationId=${translationId}`, {
       headers: {
         'Authorization': `Bearer ${sessionToken}`
       }

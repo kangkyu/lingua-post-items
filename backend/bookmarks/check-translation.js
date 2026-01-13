@@ -14,18 +14,18 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const { translationId, bookId } = req.query;
+      const { translationId } = req.query;
 
-      if (!translationId && !bookId) {
+      if (!translationId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Either translationId or bookId is required' }));
+        res.end(JSON.stringify({ error: 'translationId is required' }));
         return;
       }
 
       const bookmark = await prisma.bookmark.findFirst({
         where: {
           userId: user.id,
-          ...(translationId ? { translationId: parseInt(translationId) } : { bookId: parseInt(bookId) })
+          translationId: parseInt(translationId)
         }
       });
 
@@ -35,9 +35,9 @@ export default async function handler(req, res) {
         bookmark: bookmark || null
       }));
     } catch (error) {
-      console.error('Error checking bookmark:', error);
+      console.error('Error checking translation bookmark:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to check bookmark' }));
+      res.end(JSON.stringify({ error: 'Failed to check translation bookmark' }));
     }
   } else {
     res.writeHead(405, { 'Allow': 'GET' });
