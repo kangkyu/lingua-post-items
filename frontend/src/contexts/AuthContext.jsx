@@ -40,7 +40,6 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const authUrl = await getGoogleAuthUrl();
-      // Redirect to Google OAuth
       window.location.href = authUrl;
     } catch (error) {
       console.error('Sign-in failed:', error);
@@ -58,7 +57,6 @@ export const AuthProvider = ({ children }) => {
         setUser(result.user);
         localStorage.setItem('user', JSON.stringify(result.user));
 
-        // Store session token if provided by backend
         if (result.sessionToken) {
           setSessionToken(result.sessionToken);
           localStorage.setItem('sessionToken', result.sessionToken);
@@ -77,14 +75,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    try {
-      setUser(null);
-      setSessionToken(null);
-      localStorage.removeItem('user');
-      localStorage.removeItem('sessionToken');
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
+    setUser(null);
+    setSessionToken(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionToken');
   };
 
   const value = {

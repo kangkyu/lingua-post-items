@@ -25,12 +25,14 @@ env:
     secret: projects/359757699589/secrets/GOOGLE_CLIENT_ID
   - variable: GOOGLE_CLIENT_SECRET
     secret: projects/359757699589/secrets/GOOGLE_CLIENT_SECRET
+  - variable: JWT_SECRET
+    secret: JWT_SECRET
 
 # Build configuration
 build:
   # Root directory for the build
   rootDirectory: .
-  
+
   # Build commands
   buildCommand: |
     # Install root dependencies (including devDependencies like turbo)
@@ -40,9 +42,9 @@ build:
     cd backend
     npm install
     npx prisma generate
-  
+
   # Output directory (backend contains the server)
   outputDirectory: backend
-  
+
   # Start command
   startCommand: npm start

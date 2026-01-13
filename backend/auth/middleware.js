@@ -1,8 +1,10 @@
+import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
 /**
- * Middleware to verify session token and attach user to request
- * Expects Authorization header with Bearer token
+ * Middleware to verify JWT and attach user to request
  */
 export async function authenticateUser(req, res) {
   try {
@@ -20,28 +22,24 @@ export async function authenticateUser(req, res) {
       return { error: 'Token missing', statusCode: 401 };
     }
 
-    // Find session in database
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true }
+    // Verify JWT
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
     });
 
-    if (!session) {
-      return { error: 'Invalid session token', statusCode: 401 };
+    if (!user) {
+      return { error: 'User not found', statusCode: 401 };
     }
 
-    // Check if session has expired
-    if (new Date() > session.expiresAt) {
-      // Delete expired session
-      await prisma.session.delete({
-        where: { id: session.id }
-      });
-      return { error: 'Session expired', statusCode: 401 };
-    }
-
-    return { user: session.user };
+    return { user };
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return { error: 'Token expired', statusCode: 401 };
+    }
     console.error('Authentication error:', error.message);
-    return { error: 'Authentication failed', statusCode: 401 };
+    return { error: 'Invalid token', statusCode: 401 };
   }
 }

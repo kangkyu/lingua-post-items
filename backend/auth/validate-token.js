@@ -1,5 +1,8 @@
 import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,7 +21,7 @@ export default async function handler(req, res) {
     }
 
     const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-    
+
     if (!GOOGLE_CLIENT_ID) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Google Client ID not configured' }));
@@ -52,7 +55,6 @@ export default async function handler(req, res) {
         }
       });
     } else {
-      // Update user info if changed
       dbUser = await prisma.user.update({
         where: { email: payload.email },
         data: {
@@ -62,19 +64,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate session token and store in database
-    const sessionToken = `session_${dbUser.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: dbUser.id, email: dbUser.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-    await prisma.session.create({
-      data: {
-        token: sessionToken,
-        userId: dbUser.id,
-        expiresAt
-      }
-    });
-
-    // Create user object for response
     const user = {
       id: dbUser.id,
       email: dbUser.email,
@@ -86,7 +82,7 @@ export default async function handler(req, res) {
     res.end(JSON.stringify({
       success: true,
       user,
-      sessionToken
+      sessionToken: token
     }));
   } catch (error) {
     console.error('Token validation error:', error.message);
