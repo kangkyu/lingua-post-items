@@ -18,12 +18,19 @@ export const getGoogleAuthUrl = async () => {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 };
 
+// Capture token once when module loads (before React effects run twice)
+let capturedToken = null;
+if (window.location.hash.includes('id_token=')) {
+  const urlParams = new URLSearchParams(window.location.hash.substring(1));
+  capturedToken = urlParams.get('id_token');
+  window.history.replaceState(null, '', window.location.pathname);
+}
+
 // Handle Google OAuth callback - backend validation only
 export const handleGoogleCallback = async () => {
   try {
-    // Get ID token from URL fragment
-    const urlParams = new URLSearchParams(window.location.hash.substring(1));
-    const idToken = urlParams.get('id_token');
+    const idToken = capturedToken;
+    capturedToken = null; // clear after use
 
     if (!idToken) {
       throw new Error('No ID token received from Google');

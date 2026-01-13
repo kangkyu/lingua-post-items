@@ -41,28 +41,12 @@ export default async function handler(req, res) {
       throw new Error('Invalid ID token');
     }
 
-    // Find or create user in database
-    let dbUser = await prisma.user.findUnique({
-      where: { email: payload.email }
+    // Find or create user (atomic upsert)
+    const dbUser = await prisma.user.upsert({
+      where: { email: payload.email },
+      update: { name: payload.name, avatar: payload.picture },
+      create: { email: payload.email, name: payload.name, avatar: payload.picture }
     });
-
-    if (!dbUser) {
-      dbUser = await prisma.user.create({
-        data: {
-          email: payload.email,
-          name: payload.name,
-          avatar: payload.picture
-        }
-      });
-    } else {
-      dbUser = await prisma.user.update({
-        where: { email: payload.email },
-        data: {
-          name: payload.name,
-          avatar: payload.picture
-        }
-      });
-    }
 
     // Generate JWT
     const token = jwt.sign(
