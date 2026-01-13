@@ -5,16 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Heart, MessageCircle, Bookmark, Search, Users, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { translationService } from '@/lib/api';
+import { translationService, bookmarkService } from '@/lib/api';
 
 const Feed = () => {
-  const { user } = useAuth();
+  const { user, sessionToken } = useAuth();
   const navigate = useNavigate();
   const [translations, setTranslations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bookmarkedIds, setBookmarkedIds] = useState(new Map()); // Map of translationId -> bookmarkId
 
   useEffect(() => {
     const fetchTranslations = async () => {
@@ -33,6 +34,54 @@ const Feed = () => {
 
     fetchTranslations();
   }, []);
+
+  // Fetch user's bookmarks when logged in
+  useEffect(() => {
+    const fetchBookmarks = async () => {
+      if (user && sessionToken) {
+        try {
+          const data = await bookmarkService.getBookmarks(sessionToken);
+          const bookmarkMap = new Map();
+          data.translations.forEach(t => {
+            bookmarkMap.set(t.id, t.bookmarkId);
+          });
+          setBookmarkedIds(bookmarkMap);
+        } catch (err) {
+          console.error('Failed to fetch bookmarks:', err);
+        }
+      }
+    };
+
+    fetchBookmarks();
+  }, [user, sessionToken]);
+
+  const handleBookmarkToggle = async (translationId) => {
+    if (!user || !sessionToken) return;
+
+    const existingBookmarkId = bookmarkedIds.get(translationId);
+
+    try {
+      if (existingBookmarkId) {
+        // Remove bookmark
+        await bookmarkService.deleteBookmark(existingBookmarkId, sessionToken);
+        setBookmarkedIds(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(translationId);
+          return newMap;
+        });
+      } else {
+        // Add bookmark
+        const bookmark = await bookmarkService.createBookmark({ translationId }, sessionToken);
+        setBookmarkedIds(prev => {
+          const newMap = new Map(prev);
+          newMap.set(translationId, bookmark.id);
+          return newMap;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  };
 
   const filteredTranslations = translations.filter(translation =>
     translation.originalText.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -205,70 +254,82 @@ const Feed = () => {
                       : 'md:grid-cols-2 lg:grid-cols-3'
                     : 'md:grid-cols-1'
                 }`}>
-                  {translationGroup.map((translation) => (
-                    <div key={translation.id} className="space-y-3">
-                      <div className="p-4 bg-teal-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-teal-700">
-                            {isGrouped ? `Translation ${translationGroup.indexOf(translation) + 1}` : translation.targetLanguage}
-                          </h4>
-                          {isGrouped && (
-                            <div className="flex items-center space-x-2 text-xs text-slate-500">
-                              <Heart className="w-3 h-3" />
-                              <span>{translation.likesCount}</span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-teal-900 mb-3">{translation.translatedText}</p>
+                  {translationGroup.map((translation) => {
+                    const isBookmarked = bookmarkedIds.has(translation.id);
 
-                        <div className="flex items-center justify-between pt-2 border-t border-teal-200">
-                          <div className="flex items-center space-x-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-600 hover:text-red-600 h-6 px-2"
-                              disabled={!user}
-                            >
-                              <Heart className="w-3 h-3 mr-1" />
-                              {translation.likesCount}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-600 hover:text-blue-600 h-6 px-2"
-                              disabled={!user}
-                            >
-                              <MessageCircle className="w-3 h-3 mr-1" />
-                              {translation.commentsCount}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-600 hover:text-yellow-600 h-6 px-1"
-                              disabled={!user}
-                            >
-                              <Bookmark className="w-3 h-3" />
-                            </Button>
+                    return (
+                      <div key={translation.id} className="space-y-3">
+                        <div className="p-4 bg-teal-50 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-teal-700">
+                              {isGrouped ? `Translation ${translationGroup.indexOf(translation) + 1}` : translation.targetLanguage}
+                            </h4>
+                            {isGrouped && (
+                              <div className="flex items-center space-x-2 text-xs text-slate-500">
+                                <Heart className="w-3 h-3" />
+                                <span>{translation.likesCount}</span>
+                              </div>
+                            )}
                           </div>
-                          {user && user.email === translation.translatorEmail && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-600 hover:text-teal-600 h-6 px-2"
-                              onClick={() => navigate(`/share?edit=${translation.id}`)}
-                            >
-                              <Edit className="w-3 h-3 mr-1" />
-                              Edit
-                            </Button>
-                          )}
+                          <p className="text-teal-900 mb-3">{translation.translatedText}</p>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-teal-200">
+                            <div className="flex items-center space-x-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-slate-600 hover:text-red-600 h-6 px-2"
+                                disabled={!user}
+                              >
+                                <Heart className="w-3 h-3 mr-1" />
+                                {translation.likesCount}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-slate-600 hover:text-blue-600 h-6 px-2"
+                                disabled={!user}
+                              >
+                                <MessageCircle className="w-3 h-3 mr-1" />
+                                {translation.commentsCount}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-6 px-1 ${
+                                  isBookmarked
+                                    ? 'text-yellow-500 hover:text-yellow-600'
+                                    : 'text-slate-600 hover:text-yellow-600'
+                                }`}
+                                disabled={!user}
+                                onClick={() => handleBookmarkToggle(translation.id)}
+                              >
+                                <Bookmark
+                                  className="w-3 h-3"
+                                  fill={isBookmarked ? 'currentColor' : 'none'}
+                                />
+                              </Button>
+                            </div>
+                            {user && user.email === translation.translatorEmail && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-slate-600 hover:text-teal-600 h-6 px-2"
+                                onClick={() => navigate(`/share?edit=${translation.id}`)}
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-slate-500 px-1">
+                          by {translation.createdBy} • {translation.createdDate}
                         </div>
                       </div>
-
-                      <div className="text-xs text-slate-500 px-1">
-                        by {translation.createdBy} • {translation.createdDate}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

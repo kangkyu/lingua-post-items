@@ -7,7 +7,7 @@ import { Bookmark as BookmarkIcon, BookOpen, Heart, MessageCircle } from 'lucide
 import { userService } from '@/lib/api';
 
 const Bookmarks = () => {
-  const { user } = useAuth();
+  const { user, sessionToken } = useAuth();
   const [bookmarkedTranslations, setBookmarkedTranslations] = useState([]);
   const [bookmarkedBooks, setBookmarkedBooks] = useState([]);
   const [activeTab, setActiveTab] = useState('translations');
@@ -16,7 +16,7 @@ const Bookmarks = () => {
 
   useEffect(() => {
     const fetchBookmarks = async () => {
-      if (!user) {
+      if (!user || !sessionToken) {
         setLoading(false);
         return;
       }
@@ -24,7 +24,7 @@ const Bookmarks = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await userService.getUserBookmarks(user.id);
+        const data = await userService.getUserBookmarks(sessionToken);
         setBookmarkedTranslations(data.translations);
         setBookmarkedBooks(data.books);
       } catch (err) {
@@ -36,7 +36,7 @@ const Bookmarks = () => {
     };
 
     fetchBookmarks();
-  }, [user]);
+  }, [user, sessionToken]);
 
   if (!user) {
     return (

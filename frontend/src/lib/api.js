@@ -77,13 +77,45 @@ export const bookService = {
   }
 };
 
+export const bookmarkService = {
+  async getBookmarks(sessionToken) {
+    return await apiCall('/bookmarks', {
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  },
+
+  async createBookmark(data, sessionToken) {
+    return await apiCall('/bookmarks', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify(data)
+    });
+  },
+
+  async deleteBookmark(bookmarkId, sessionToken) {
+    return await apiCall(`/bookmarks/${bookmarkId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  },
+
+  async checkBookmark(translationId, sessionToken) {
+    return await apiCall(`/bookmarks/check?translationId=${translationId}`, {
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  }
+};
+
 export const userService = {
-  async getUserBookmarks(userId) {
-    // TODO: Implement user bookmarks API endpoint
-    // For now return empty arrays until backend endpoint is created
-    return {
-      translations: [],
-      books: []
-    };
+  async getUserBookmarks(sessionToken) {
+    return await bookmarkService.getBookmarks(sessionToken);
   }
 };
