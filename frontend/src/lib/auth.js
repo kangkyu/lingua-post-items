@@ -28,13 +28,14 @@ if (window.location.hash.includes('id_token=')) {
 
 // Handle Google OAuth callback - backend validation only
 export const handleGoogleCallback = async () => {
-  try {
-    const idToken = capturedToken;
-    capturedToken = null; // clear after use
+  const idToken = capturedToken;
+  capturedToken = null; // clear after use
 
-    if (!idToken) {
-      throw new Error('No ID token received from Google');
-    }
+  if (!idToken) {
+    return { success: false };
+  }
+
+  try {
 
     // Validate ID token with backend
     const response = await fetch(`${API_BASE_URL}/auth/validate-token`, {
