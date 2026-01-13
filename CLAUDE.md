@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Lingua Stagify is a translation management platform where users can create, organize, and share translations in themed books. Built with React frontend and Node.js backend, using Google OAuth for authentication and Google Translate API for translations.
+Lingua Post is a translation management platform where users can create, organize, and share translations in themed books. Built with React frontend and Node.js backend, using Google OAuth for authentication and Google Translate API for translations.
 
 ## Development Commands
 

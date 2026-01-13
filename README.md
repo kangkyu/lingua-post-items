@@ -1,4 +1,4 @@
-# Stagify - Translation Management Platform
+# Lingua Post - Translation Management Platform
 
 A modern translation management platform built with React and Google Auth, designed to help users create, share, and discover translations in a collaborative environment.
 
@@ -67,7 +67,7 @@ A modern translation management platform built with React and Google Auth, desig
 
 1. **Clone and install dependencies**:
 ```bash
-cd lingua-stagify
+cd lingua-post-items
 npm install
 ```
 

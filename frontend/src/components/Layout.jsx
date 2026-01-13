@@ -44,7 +44,7 @@ const Layout = ({ children }) => {
                 <img src="/lingua-logo.png" alt="Lingua" className="w-10 h-10" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-2xl font-bold text-slate-800">Stagify</h1>
+                <h1 className="text-2xl font-bold text-slate-800">Lingua Post</h1>
                 <p className="text-xs text-slate-500 -mt-1">Stage Your Translation</p>
               </div>
             </Link>
