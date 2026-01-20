@@ -1,10 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User as UserIcon, Calendar, Heart, MessageCircle } from 'lucide-react';
+import { User as UserIcon, Calendar, BookOpen, Bookmark } from 'lucide-react';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, sessionToken } = useAuth();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!sessionToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await profileService.getProfile(sessionToken);
+        setProfileData(data);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [sessionToken]);
 
   if (!user) {
     return (
@@ -15,6 +40,45 @@ const Profile = () => {
       </div>
     );
   }
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+        <p className="text-slate-500 mt-4">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  const formatRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) return 'today';
+    if (diffInDays === 1) return 'yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    return `${Math.floor(diffInDays / 30)} months ago`;
+  };
+
+  const stats = profileData?.stats || { translationsCount: 0, booksCount: 0, bookmarksCount: 0 };
+  const recentTranslations = profileData?.recentTranslations || [];
+  const createdAt = profileData?.user?.createdAt;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -27,7 +91,7 @@ const Profile = () => {
           <p className="text-slate-600">{user.email}</p>
           <div className="flex items-center text-sm text-slate-500 mt-1">
             <Calendar className="w-4 h-4 mr-1" />
-            Joined January 2024
+            Joined {formatDate(createdAt)}
           </div>
         </div>
       </div>
@@ -39,31 +103,31 @@ const Profile = () => {
             <CardTitle className="text-lg">Translations Created</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-teal-600">24</div>
+            <div className="text-3xl font-bold text-teal-600">{stats.translationsCount}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center">
-              <Heart className="w-5 h-5 mr-2" />
-              Likes Received
+              <BookOpen className="w-5 h-5 mr-2" />
+              Books Created
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-500">156</div>
+            <div className="text-3xl font-bold text-blue-500">{stats.booksCount}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center">
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Comments Received
+              <Bookmark className="w-5 h-5 mr-2" />
+              Bookmarks
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-500">43</div>
+            <div className="text-3xl font-bold text-amber-500">{stats.bookmarksCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -74,16 +138,22 @@ const Profile = () => {
           <CardTitle>Recent Translations</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="border-b border-slate-200 pb-4 last:border-b-0">
-              <p className="font-medium text-slate-800">"Hello, how are you?" → "Hola, ¿cómo estás?"</p>
-              <p className="text-sm text-slate-600">from Basic Spanish Conversations • 3 days ago</p>
+          {recentTranslations.length === 0 ? (
+            <p className="text-slate-500 text-center py-4">No translations yet</p>
+          ) : (
+            <div className="space-y-4">
+              {recentTranslations.map((translation) => (
+                <div key={translation.id} className="border-b border-slate-200 pb-4 last:border-b-0">
+                  <p className="font-medium text-slate-800">
+                    "{translation.originalText}" → "{translation.translatedText}"
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    from {translation.book?.title || 'Unknown book'} • {formatRelativeTime(translation.createdAt)}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="border-b border-slate-200 pb-4 last:border-b-0">
-              <p className="font-medium text-slate-800">"Good morning" → "Buenos días"</p>
-              <p className="text-sm text-slate-600">from Daily Greetings • 5 days ago</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

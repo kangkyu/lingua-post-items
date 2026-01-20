@@ -127,3 +127,13 @@ export const userService = {
     return await bookmarkService.getBookmarks(sessionToken);
   }
 };
+
+export const profileService = {
+  async getProfile(sessionToken) {
+    return await apiCall('/profile', {
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  }
+};
