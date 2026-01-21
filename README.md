@@ -272,6 +272,21 @@ DATABASE_URL="your_postgresql_connection_string"
 5. Frontend exchanges the code directly with Google for user info
 6. User data is stored in localStorage for session management
 
+## Deployment
+
+### Deploy Frontend to Firebase Hosting
+
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+### Deploy Backend to Firebase App Hosting
+
+```bash
+git push
+```
+
 ## API Documentation
 
 ### System API
@@ -317,6 +332,13 @@ Content-Type: application/json
 {
   "idToken": "google_id_token"
 }
+```
+
+### Profile API
+```bash
+# Get current user profile with stats and recent translations
+GET /profile
+Authorization: Bearer <session_token>
 ```
 
 ## Troubleshooting
