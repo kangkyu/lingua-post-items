@@ -210,9 +210,6 @@ The database uses PostgreSQL with Prisma ORM and includes:
 
 ### Database Commands
 ```bash
-# Push schema changes
-npm run db:push
-
 # Generate Prisma client
 npm run db:generate
 
@@ -222,6 +219,23 @@ npm run db:studio
 # Seed with sample data
 npm run db:seed
 ```
+
+### Database Migrations
+
+For schema changes, use Prisma migrations:
+
+```bash
+# Create a new migration locally (after editing schema.prisma)
+cd backend
+npx prisma migrate dev --name describe_your_change
+
+# Example:
+npx prisma migrate dev --name add_user_avatar_field
+```
+
+This creates migration files in `backend/prisma/migrations/`. Commit these files to git.
+
+On production deploy, `prisma migrate deploy` runs automatically to apply pending migrations.
 
 ## Authentication Setup
 
@@ -277,7 +291,9 @@ DATABASE_URL="your_postgresql_connection_string"
 ### Deploy Frontend to Firebase Hosting
 
 ```bash
+cd frontend
 npm run build
+cd ..
 firebase deploy --only hosting
 ```
 
@@ -286,6 +302,8 @@ firebase deploy --only hosting
 ```bash
 git push
 ```
+
+Database migrations are applied automatically during backend deployment via `prisma migrate deploy`.
 
 ## API Documentation
 
