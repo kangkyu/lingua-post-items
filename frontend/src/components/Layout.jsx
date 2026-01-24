@@ -76,7 +76,7 @@ const Layout = ({ children }) => {
                       {getUserInitials(user.name)}
                     </div>
                     <span className="hidden sm:inline text-sm font-medium text-slate-700">
-                      {user.name}
+                      {user.email}
                     </span>
                   </div>
                   <Button

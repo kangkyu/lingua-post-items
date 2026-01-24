@@ -135,5 +135,9 @@ export const profileService = {
         'Authorization': `Bearer ${sessionToken}`
       }
     });
+  },
+
+  async getPublicProfile(userId) {
+    return await apiCall(`/profile/${userId}`);
   }
 };

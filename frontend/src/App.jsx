@@ -29,6 +29,7 @@ function App() {
                 <Route path="/books/:id" element={<BookDetail />} />
                 <Route path="/share" element={<Share />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
                 <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/create-book" element={<CreateBook />} />
               </Routes>
