@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const userId = req.params.id;
+  const userId = req.query.id;
 
   if (!userId) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
