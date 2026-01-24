@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -244,7 +244,7 @@ const BookDetail = () => {
                   <div className="flex items-center justify-between text-sm text-slate-500">
                     <span>{translation.context}</span>
                     <div className="flex items-center gap-3">
-                      <span>by {translation.createdBy} • {translation.createdDate}</span>
+                      <span>by <Link to={`/profile/${translation.translatorId}`} className="text-teal-600 hover:underline">{translation.createdBy}</Link> • {translation.createdDate}</span>
                       {user && (
                         <Button
                           variant="ghost"

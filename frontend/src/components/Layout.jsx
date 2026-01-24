@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
     { title: 'Books', url: '/books', icon: BookOpen },
     { title: 'Share Translation', url: '/share', icon: PlusCircle },
     { title: 'My Bookmarks', url: '/bookmarks', icon: Bookmark },
-    { title: 'Profile', url: '/profile', icon: User },
+    { title: 'Dashboard', url: '/dashboard', icon: User },
   ];
 
   const getUserInitials = (name) => {

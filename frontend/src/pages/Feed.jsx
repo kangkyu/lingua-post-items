@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Heart, MessageCircle, Bookmark, Search, Users, Edit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { translationService, bookmarkService } from '@/lib/api';
 
 const Feed = () => {
@@ -311,7 +311,7 @@ const Feed = () => {
                                 </Button>
                               )}
                             </div>
-                            {user && user.email === translation.translatorEmail && (
+                            {user && user.id === translation.translatorId && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -326,7 +326,7 @@ const Feed = () => {
                         </div>
 
                         <div className="text-xs text-slate-500 px-1">
-                          by {translation.createdBy} • {translation.createdDate}
+                          by <Link to={`/profile/${translation.translatorId}`} className="text-teal-600 hover:underline" onClick={(e) => e.stopPropagation()}>{translation.createdBy}</Link> • {translation.createdDate}
                         </div>
                       </div>
                     );

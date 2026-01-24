@@ -54,8 +54,7 @@ export default async function handler(req, res) {
         author: translation.book.author,
         bookId: translation.book.id,
         coverImage: translation.book.coverImage,
-        createdBy: translation.translator.name || translation.translator.email,
-        translatorEmail: translation.translator.email,
+        createdBy: translation.translator.name || 'Anonymous',
         translatorId: translation.translator.id,
         createdDate: translation.createdAt.toLocaleDateString(),
         likesCount: 0, // TODO: Implement likes system

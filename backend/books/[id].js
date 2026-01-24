@@ -68,7 +68,8 @@ export default async function handler(req, res) {
           chapter: translation.chapter,
           pageNumber: translation.pageNumber,
           createdAt: translation.createdAt,
-          createdBy: translation.translator.name || translation.translator.email,
+          createdBy: translation.translator.name || 'Anonymous',
+          translatorId: translation.translator.id,
           createdDate: translation.createdAt.toLocaleDateString()
         }))
       };
