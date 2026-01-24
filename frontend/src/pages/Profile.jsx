@@ -5,6 +5,11 @@ import { profileService } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User as UserIcon, Calendar, BookOpen, Bookmark } from 'lucide-react';
 
+const getUserInitials = (name) => {
+  if (!name) return 'U';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+};
+
 const Profile = () => {
   const { userId } = useParams();
   const { user, sessionToken } = useAuth();
@@ -99,7 +104,7 @@ const Profile = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center space-x-6">
         <div className="w-20 h-20 bg-slate-700 text-white rounded-full flex items-center justify-center text-2xl font-bold">
-          {profileUser?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+          {getUserInitials(profileUser?.name)}
         </div>
         <div>
           <h1 className="text-3xl font-bold text-slate-900">{profileUser?.name}</h1>

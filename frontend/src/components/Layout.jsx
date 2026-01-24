@@ -2,35 +2,31 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { 
-  Home, 
-  BookOpen, 
-  PlusCircle, 
-  Bookmark, 
-  User, 
-  Menu, 
+import {
+  Home,
+  BookOpen,
+  PlusCircle,
+  Bookmark,
+  User,
+  Menu,
   X,
   Globe,
-  LogOut 
+  LogOut,
+  ChevronDown
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
   const { user, signInWithGoogle, signOut, loading } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const navigationItems = [
     { title: 'Feed', url: '/feed', icon: Home },
     { title: 'Books', url: '/books', icon: BookOpen },
     { title: 'Share Translation', url: '/share', icon: PlusCircle },
     { title: 'My Bookmarks', url: '/bookmarks', icon: Bookmark },
-    { title: 'Dashboard', url: '/dashboard', icon: User },
   ];
-
-  const getUserInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -70,23 +66,45 @@ const Layout = ({ children }) => {
             {/* User Menu */}
             <div className="flex items-center space-x-4">
               {user ? (
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-slate-700 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                      {getUserInitials(user.name)}
-                    </div>
-                    <span className="hidden sm:inline text-sm font-medium text-slate-700">
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-slate-700">
                       {user.email}
                     </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={signOut}
-                    className="text-slate-600 hover:text-slate-900"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isUserMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                        <Link
+                          to="/dashboard"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <User className="w-4 h-4" />
+                          <span>Dashboard</span>
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            signOut();
+                          }}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <Button
