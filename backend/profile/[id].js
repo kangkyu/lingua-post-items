@@ -7,9 +7,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const userId = req.query.id;
+  const userId = parseInt(req.query.id);
 
-  if (!userId) {
+  if (!userId || isNaN(userId)) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'User ID is required' }));
     return;
