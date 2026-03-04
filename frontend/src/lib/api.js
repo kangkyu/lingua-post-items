@@ -122,6 +122,31 @@ export const bookmarkService = {
   }
 };
 
+export const commentService = {
+  async getByTranslation(translationId) {
+    return await apiCall(`/comments/translation/${translationId}`);
+  },
+
+  async create(data, sessionToken) {
+    return await apiCall('/comments', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify(data)
+    });
+  },
+
+  async delete(commentId, sessionToken) {
+    return await apiCall(`/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    });
+  }
+};
+
 export const userService = {
   async getUserBookmarks(sessionToken) {
     return await bookmarkService.getBookmarks(sessionToken);

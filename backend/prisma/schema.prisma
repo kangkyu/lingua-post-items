@@ -27,6 +27,7 @@ model User {
   translations Translation[]
   bookmarks   Bookmark[]
   sessions    Session[]
+  comments    Comment[]
 
   @@map("users")
 }
@@ -79,6 +80,7 @@ model Translation {
   translatorId Int @map("translator_id")
   translator   User      @relation(fields: [translatorId], references: [id], onDelete: Cascade)
   bookmarks    Bookmark[]
+  comments     Comment[]
 
   @@map("translations")
 }
@@ -98,4 +100,18 @@ model Bookmark {
   @@unique([userId, translationId])
   @@unique([userId, bookId])
   @@map("bookmarks")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  translationId Int         @map("translation_id")
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }

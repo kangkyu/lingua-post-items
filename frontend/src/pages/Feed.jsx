@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Heart, MessageCircle, Bookmark, Search, Users, Edit } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { translationService, bookmarkService } from '@/lib/api';
+import CommentSection from '@/components/CommentSection';
 
 const Feed = () => {
   const { user, sessionToken } = useAuth();
@@ -16,6 +17,7 @@ const Feed = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Map()); // Map of translationId -> bookmarkId
+  const [expandedComments, setExpandedComments] = useState(new Set());
 
   useEffect(() => {
     const fetchTranslations = async () => {
@@ -81,6 +83,23 @@ const Feed = () => {
     } catch (err) {
       console.error('Failed to toggle bookmark:', err);
     }
+  };
+
+  const toggleComments = (translationId) => {
+    setExpandedComments(prev => {
+      const next = new Set(prev);
+      if (next.has(translationId)) next.delete(translationId);
+      else next.add(translationId);
+      return next;
+    });
+  };
+
+  const handleCommentCountChange = (translationId, delta) => {
+    setTranslations(prev =>
+      prev.map(t =>
+        t.id === translationId ? { ...t, commentsCount: t.commentsCount + delta } : t
+      )
+    );
   };
 
   const filteredTranslations = translations.filter(translation =>
@@ -287,8 +306,8 @@ const Feed = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-slate-600 hover:text-blue-600 h-6 px-2"
-                                disabled={!user}
+                                className={`h-6 px-2 ${expandedComments.has(translation.id) ? 'text-blue-600' : 'text-slate-600 hover:text-blue-600'}`}
+                                onClick={() => toggleComments(translation.id)}
                               >
                                 <MessageCircle className="w-3 h-3 mr-1" />
                                 {translation.commentsCount}
@@ -328,6 +347,13 @@ const Feed = () => {
                         <div className="text-xs text-slate-500 px-1">
                           by <Link to={`/profile/${translation.translatorId}`} className="text-teal-600 hover:underline" onClick={(e) => e.stopPropagation()}>{translation.createdBy}</Link> • {translation.createdDate}
                         </div>
+
+                        {expandedComments.has(translation.id) && (
+                          <CommentSection
+                            translationId={translation.id}
+                            onCountChange={(delta) => handleCommentCountChange(translation.id, delta)}
+                          />
+                        )}
                       </div>
                     );
                   })}

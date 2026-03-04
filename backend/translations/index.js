@@ -33,6 +33,9 @@ export default async function handler(req, res) {
             select: {
               id: true
             }
+          },
+          _count: {
+            select: { comments: true }
           }
         },
         orderBy: {
@@ -58,7 +61,7 @@ export default async function handler(req, res) {
         translatorId: translation.translator.id,
         createdDate: translation.createdAt.toLocaleDateString(),
         likesCount: 0, // TODO: Implement likes system
-        commentsCount: 0, // TODO: Implement comments system
+        commentsCount: translation._count.comments,
         tags: [translation.sourceLanguage, translation.targetLanguage, 'classic'] // TODO: Implement dynamic tags
       }));
 
