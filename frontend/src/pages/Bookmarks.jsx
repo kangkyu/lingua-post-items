@@ -110,10 +110,10 @@ const Bookmarks = () => {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <CardTitle className="text-lg text-slate-800">{translation.bookTitle}</CardTitle>
-                          <p className="text-sm text-slate-600">by {translation.author}</p>
+                          <CardTitle className="text-lg text-slate-800">{translation.book?.title || translation.bookTitle}</CardTitle>
+                          <p className="text-sm text-slate-600">by {translation.book?.author || translation.author}</p>
                           <p className="text-xs text-slate-500 mt-1">
-                            Bookmarked on {translation.bookmarkedAt}
+                            Bookmarked on {new Date(translation.bookmarkedAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -132,7 +132,7 @@ const Bookmarks = () => {
 
                       <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                         <div className="text-xs text-slate-500">
-                          {translation.context} • by {translation.createdBy} • {translation.createdDate}
+                          {translation.context} • by {translation.translator?.name || translation.createdBy || 'Anonymous'} • {new Date(translation.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </CardContent>
@@ -183,7 +183,7 @@ const Bookmarks = () => {
                             Language: {book.language}
                           </div>
                           <div className="text-xs text-slate-500">
-                            Bookmarked on {book.bookmarkedAt}
+                            Bookmarked on {new Date(book.bookmarkedAt).toLocaleDateString()}
                           </div>
                         </CardContent>
                       </Card>
