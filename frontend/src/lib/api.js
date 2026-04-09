@@ -4,13 +4,21 @@ import { API_BASE_URL } from './config.js';
 // Helper function to handle API calls
 const apiCall = async (endpoint, options = {}) => {
   try {
+    const { headers: optionHeaders, ...restOptions } = options;
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...restOptions,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...optionHeaders,
       },
-      ...options,
     });
+
+    if (response.status === 401) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('sessionToken');
+      window.location.href = '/';
+      throw new Error('Session expired. Please sign in again.');
+    }
 
     if (!response.ok) {
       throw new Error(`API call failed: ${response.status} ${response.statusText}`);
