@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User as UserIcon, Calendar, BookOpen, Bookmark } from 'lucide-react';
+import { User as UserIcon, Calendar, Bookmark } from 'lucide-react';
 
 const getUserInitials = (name) => {
   if (!name) return 'U';
@@ -96,7 +96,7 @@ const Profile = () => {
   };
 
   const profileUser = profileData?.user;
-  const stats = profileData?.stats || { translationsCount: 0, booksCount: 0, bookmarksCount: 0 };
+  const stats = profileData?.stats || { translationsCount: 0, bookmarksCount: 0 };
   const recentTranslations = profileData?.recentTranslations || [];
   const createdAt = profileUser?.createdAt;
 
@@ -116,25 +116,13 @@ const Profile = () => {
       </div>
 
       {/* Stats */}
-      <div className={`grid gap-6 ${isOwnProfile ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+      <div className={`grid gap-6 ${isOwnProfile ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Translations Created</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-teal-600">{stats.translationsCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Books Created
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-500">{stats.booksCount}</div>
           </CardContent>
         </Card>
 
@@ -169,7 +157,7 @@ const Profile = () => {
                     "{translation.originalText}" → "{translation.translatedText}"
                   </p>
                   <p className="text-sm text-slate-600">
-                    from {translation.book?.title || 'Unknown book'} • {formatRelativeTime(translation.createdAt)}
+                    {translation.sourceName ? `from ${translation.sourceName} • ` : ''}{formatRelativeTime(translation.createdAt)}
                   </p>
                 </div>
               ))}

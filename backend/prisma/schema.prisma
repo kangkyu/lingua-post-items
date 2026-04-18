@@ -23,7 +23,6 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  books       Book[]
   translations Translation[]
   bookmarks   Bookmark[]
   sessions    Session[]
@@ -43,31 +42,13 @@ model Session {
   @@map("sessions")
 }
 
-model Book {
-  id          Int   @id @default(autoincrement())
-  title       String
-  author      String
-  coverImage  String? @map("cover_image")
-  description String?
-  language    String   @default("en")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  authorId     Int @map("author_id")
-  authorUser   User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  translations Translation[]
-  bookmarks    Bookmark[]
-
-  @@map("books")
-}
-
 model Translation {
   id           Int   @id @default(autoincrement())
   originalText String @map("original_text")
   translatedText String @map("translated_text")
   sourceLanguage String @default("en") @map("source_language")
   targetLanguage String @map("target_language")
+  sourceName   String? @map("source_name")
   context      String?
   chapter      String?
   pageNumber   Int? @map("page_number")
@@ -75,8 +56,6 @@ model Translation {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  bookId       Int @map("book_id")
-  book         Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
   translatorId Int @map("translator_id")
   translator   User      @relation(fields: [translatorId], references: [id], onDelete: Cascade)
   bookmarks    Bookmark[]
@@ -91,14 +70,11 @@ model Bookmark {
 
   // Relations
   userId        Int @map("user_id")
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  translationId Int? @map("translation_id")
-  translation   Translation? @relation(fields: [translationId], references: [id], onDelete: Cascade)
-  bookId        Int? @map("book_id")
-  book          Book?        @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  translationId Int         @map("translation_id")
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, translationId])
-  @@unique([userId, bookId])
   @@map("bookmarks")
 }
 

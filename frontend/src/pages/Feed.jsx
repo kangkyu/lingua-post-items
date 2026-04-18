@@ -102,15 +102,17 @@ const Feed = () => {
     );
   };
 
-  const filteredTranslations = translations.filter(translation =>
-    translation.originalText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    translation.translatedText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    translation.bookTitle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTranslations = translations.filter(translation => {
+    const term = searchTerm.toLowerCase();
+    return (
+      translation.originalText.toLowerCase().includes(term) ||
+      translation.translatedText.toLowerCase().includes(term) ||
+      (translation.sourceName || '').toLowerCase().includes(term)
+    );
+  });
 
-  // Group translations by book title, original text, and target language
   const groupedTranslations = filteredTranslations.reduce((groups, translation) => {
-    const key = `${translation.bookTitle}|||${translation.originalText}|||${translation.targetLanguage}`;
+    const key = `${translation.sourceName || ''}|||${translation.originalText}|||${translation.targetLanguage}`;
     if (!groups[key]) {
       groups[key] = [];
     }
@@ -164,7 +166,7 @@ const Feed = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <Input
-            placeholder="Search translations, books, or context..."
+            placeholder="Search translations, sources, or context..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -229,7 +231,7 @@ const Feed = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg text-slate-800 flex items-center gap-2">
-                      {firstTranslation.bookTitle}
+                      {firstTranslation.sourceName || 'Untitled source'}
                       {isGrouped && (
                         <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
                           <Users className="w-3 h-3" />
@@ -237,9 +239,11 @@ const Feed = () => {
                         </span>
                       )}
                     </CardTitle>
-                    <p className="text-sm text-slate-600">
-                      by {firstTranslation.author} • {firstTranslation.context}
-                    </p>
+                    {firstTranslation.context && (
+                      <p className="text-sm text-slate-600">
+                        {firstTranslation.context}
+                      </p>
+                    )}
                     {isGrouped && (
                       <p className="text-xs text-blue-600 mt-1">
                         Multiple {firstTranslation.targetLanguage} translations for comparison

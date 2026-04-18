@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting classics seed...');
 
-  // Create a Korean translator persona
   const translator = await prisma.user.upsert({
     where: { email: 'soyeon.kim@example.com' },
     update: {},
@@ -16,31 +15,6 @@ async function main() {
     },
   });
 
-  // Create two classic literature books
-  const [thePearl, mobyDick] = await Promise.all([
-    prisma.book.create({
-      data: {
-        title: 'The Pearl',
-        author: 'John Steinbeck',
-        authorId: translator.id,
-        coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&h=600&fit=crop',
-        description: 'A parable about a poor pearl diver who finds a magnificent pearl and the destruction it brings. Published in 1947, it explores themes of greed, fate, and the corruption of innocence.',
-        language: 'en'
-      },
-    }),
-    prisma.book.create({
-      data: {
-        title: 'Moby Dick',
-        author: 'Herman Melville',
-        authorId: translator.id,
-        coverImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&h=600&fit=crop',
-        description: 'The epic tale of Captain Ahab\'s obsessive quest to hunt the great white whale. Published in 1851, it is considered one of the Great American Novels.',
-        language: 'en'
-      },
-    }),
-  ]);
-
-  // EN→KO translations for The Pearl
   const translationsData = [
     {
       originalText: "In the town they tell the story of the great pearl—how it was found and how it was lost again.",
@@ -50,7 +24,7 @@ async function main() {
       context: "Opening line of the novella",
       chapter: "Chapter 1",
       pageNumber: 1,
-      bookId: thePearl.id,
+      sourceName: "The Pearl",
       translatorId: translator.id
     },
     {
@@ -61,7 +35,7 @@ async function main() {
       context: "Reflection on human nature and greed",
       chapter: "Chapter 3",
       pageNumber: 25,
-      bookId: thePearl.id,
+      sourceName: "The Pearl",
       translatorId: translator.id
     },
     {
@@ -72,7 +46,7 @@ async function main() {
       context: "Kino's loss after finding the pearl",
       chapter: "Chapter 5",
       pageNumber: 67,
-      bookId: thePearl.id,
+      sourceName: "The Pearl",
       translatorId: translator.id
     },
     {
@@ -83,7 +57,7 @@ async function main() {
       context: "On the power of imagination and planning",
       chapter: "Chapter 3",
       pageNumber: 22,
-      bookId: thePearl.id,
+      sourceName: "The Pearl",
       translatorId: translator.id
     },
     {
@@ -94,11 +68,10 @@ async function main() {
       context: "The pearl as a symbol of hope",
       chapter: "Chapter 2",
       pageNumber: 19,
-      bookId: thePearl.id,
+      sourceName: "The Pearl",
       translatorId: translator.id
     },
 
-    // EN→KO translations for Moby Dick
     {
       originalText: "Call me Ishmael.",
       translatedText: "나를 이슈메일이라 불러다오.",
@@ -107,7 +80,7 @@ async function main() {
       context: "Opening line of the novel",
       chapter: "Chapter 1: Loomings",
       pageNumber: 1,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
     {
@@ -118,7 +91,7 @@ async function main() {
       context: "On the nature of true discovery",
       chapter: "Chapter 12: Biographical",
       pageNumber: 55,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
     {
@@ -129,7 +102,7 @@ async function main() {
       context: "Stubb's fearless attitude toward fate",
       chapter: "Chapter 39: First Night Watch",
       pageNumber: 168,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
     {
@@ -140,7 +113,7 @@ async function main() {
       context: "Philosophical reflection on suffering",
       chapter: "Chapter 96: The Try-Works",
       pageNumber: 355,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
     {
@@ -151,7 +124,7 @@ async function main() {
       context: "Ishmael on his friendship with Queequeg",
       chapter: "Chapter 3: The Spouter-Inn",
       pageNumber: 24,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
     {
@@ -162,7 +135,7 @@ async function main() {
       context: "Captain Ahab's final words to Moby Dick",
       chapter: "Chapter 135: The Chase—Third Day",
       pageNumber: 468,
-      bookId: mobyDick.id,
+      sourceName: "Moby Dick",
       translatorId: translator.id
     },
   ];
@@ -177,7 +150,6 @@ async function main() {
 
   console.log('✅ Classics seed completed successfully');
   console.log(`👤 Created 1 user: ${translator.name}`);
-  console.log(`📚 Created 2 books: ${thePearl.title}, ${mobyDick.title}`);
   console.log(`📝 Created ${createdTranslations.length} EN→KO translations`);
 }
 

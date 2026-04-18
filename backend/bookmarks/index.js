@@ -2,7 +2,6 @@ import prisma from '../lib/prisma.js';
 import { authenticateUser } from '../auth/middleware.js';
 
 export default async function handler(req, res) {
-  // All bookmark operations require authentication
   const authResult = await authenticateUser(req, res);
 
   if (authResult.error) {
@@ -20,25 +19,7 @@ export default async function handler(req, res) {
         include: {
           translation: {
             include: {
-              book: {
-                select: {
-                  id: true,
-                  title: true,
-                  author: true
-                }
-              },
               translator: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          },
-          book: {
-            include: {
-              authorUser: {
                 select: {
                   id: true,
                   name: true,
@@ -61,16 +42,8 @@ export default async function handler(req, res) {
           bookmarkedAt: b.createdAt
         }));
 
-      const books = bookmarks
-        .filter(b => b.book)
-        .map(b => ({
-          bookmarkId: b.id,
-          ...b.book,
-          bookmarkedAt: b.createdAt
-        }));
-
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ translations, books }));
+      res.end(JSON.stringify({ translations }));
     } catch (error) {
       console.error('Error fetching bookmarks:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -78,25 +51,18 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     try {
-      const { translationId, bookId } = req.body;
+      const { translationId } = req.body;
 
-      if (!translationId && !bookId) {
+      if (!translationId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Either translationId or bookId is required' }));
+        res.end(JSON.stringify({ error: 'translationId is required' }));
         return;
       }
 
-      if (translationId && bookId) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Cannot bookmark both translation and book' }));
-        return;
-      }
-
-      // Check if bookmark already exists
       const existing = await prisma.bookmark.findFirst({
         where: {
           userId: user.id,
-          ...(translationId ? { translationId } : { bookId })
+          translationId
         }
       });
 
@@ -109,7 +75,7 @@ export default async function handler(req, res) {
       const bookmark = await prisma.bookmark.create({
         data: {
           userId: user.id,
-          ...(translationId ? { translationId } : { bookId })
+          translationId
         }
       });
 

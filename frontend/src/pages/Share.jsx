@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { translationService, bookService } from '@/lib/api';
+import { translationService } from '@/lib/api';
 import { API_BASE_URL } from '@/lib/config.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,44 +17,18 @@ const Share = () => {
   const isEditMode = !!editId;
 
   const [formData, setFormData] = useState({
-    bookId: '',
+    sourceName: '',
     originalText: '',
     translatedText: '',
-    sourceLanguage: 'en', // Default source language
-    targetLanguage: 'ko', // Default target language
-    context: '',
-    tags: []
+    sourceLanguage: 'en',
+    targetLanguage: 'ko',
+    context: ''
   });
-  const [books, setBooks] = useState([]);
-  const [isLoadingBooks, setIsLoadingBooks] = useState(true);
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
   const [isFetchingSuggestion, setIsFetchingSuggestion] = useState(false);
-  const [showCreateBook, setShowCreateBook] = useState(false);
-  const [newBookData, setNewBookData] = useState({
-    title: '',
-    author: '',
-    description: ''
-  });
 
-  // Fetch books on component mount
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const booksData = await bookService.getAllBooks();
-        setBooks(booksData);
-      } catch (error) {
-        console.error('Failed to fetch books:', error);
-      } finally {
-        setIsLoadingBooks(false);
-      }
-    };
-
-    fetchBooks();
-  }, []);
-
-  // Load translation if in edit mode
   useEffect(() => {
     if (isEditMode && editId) {
       const loadTranslation = async () => {
@@ -62,13 +36,12 @@ const Share = () => {
           setIsLoadingTranslation(true);
           const translation = await translationService.getTranslationById(editId);
           setFormData({
-            bookId: translation.bookId.toString(),
+            sourceName: translation.sourceName || '',
             originalText: translation.originalText,
             translatedText: translation.translatedText,
             sourceLanguage: translation.sourceLanguage,
             targetLanguage: translation.targetLanguage,
-            context: translation.context || '',
-            tags: []
+            context: translation.context || ''
           });
         } catch (error) {
           console.error('Failed to load translation:', error);
@@ -123,46 +96,8 @@ const Share = () => {
     );
   }
 
-  const handleCreateBook = async () => {
-    if (!newBookData.title || !newBookData.author) {
-      alert('Please enter both title and author for the book.');
-      return;
-    }
-
-    try {
-      const bookData = {
-        title: newBookData.title,
-        author: newBookData.author,
-        description: newBookData.description || '',
-        language: formData.targetLanguage
-      };
-
-      const result = await bookService.createBook(bookData, sessionToken);
-
-      // Add the new book to the list
-      setBooks([...books, result]);
-
-      // Select the new book
-      setFormData({ ...formData, bookId: result.id.toString() });
-
-      // Reset and hide the form
-      setNewBookData({ title: '', author: '', description: '' });
-      setShowCreateBook(false);
-
-      alert('Book created successfully!');
-    } catch (error) {
-      console.error('Failed to create book:', error);
-      alert('Failed to create book. Please try again.');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.bookId) {
-      alert('Please select a book for this translation.');
-      return;
-    }
 
     if (!sessionToken) {
       alert('You must be signed in to create a translation.');
@@ -176,7 +111,7 @@ const Share = () => {
         translatedText: formData.translatedText,
         sourceLanguage: formData.sourceLanguage,
         targetLanguage: formData.targetLanguage,
-        bookId: formData.bookId,
+        sourceName: formData.sourceName || null,
         context: formData.context || null
       };
 
@@ -188,7 +123,6 @@ const Share = () => {
         alert('Translation created successfully!');
       }
 
-      // Navigate to the feed
       navigate('/feed');
     } catch (error) {
       console.error(`Failed to ${isEditMode ? 'update' : 'create'} translation:`, error);
@@ -224,65 +158,14 @@ const Share = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-slate-700">
-                  Select Book
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCreateBook(!showCreateBook)}
-                  className="text-teal-600 hover:text-teal-700"
-                >
-                  {showCreateBook ? 'Cancel' : '+ Create New Book'}
-                </Button>
-              </div>
-
-              {showCreateBook ? (
-                <div className="space-y-3 p-4 bg-slate-50 rounded-md">
-                  <Input
-                    value={newBookData.title}
-                    onChange={(e) => setNewBookData({ ...newBookData, title: e.target.value })}
-                    placeholder="Book title"
-                  />
-                  <Input
-                    value={newBookData.author}
-                    onChange={(e) => setNewBookData({ ...newBookData, author: e.target.value })}
-                    placeholder="Author name"
-                  />
-                  <Textarea
-                    rows={2}
-                    value={newBookData.description}
-                    onChange={(e) => setNewBookData({ ...newBookData, description: e.target.value })}
-                    placeholder="Description (optional)"
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleCreateBook}
-                    className="w-full bg-teal-500 hover:bg-teal-600"
-                  >
-                    Create Book
-                  </Button>
-                </div>
-              ) : (
-                <select
-                  value={formData.bookId}
-                  onChange={(e) => setFormData({ ...formData, bookId: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  required
-                  disabled={isLoadingBooks}
-                >
-                  <option value="">
-                    {isLoadingBooks ? 'Loading books...' : 'Choose a book...'}
-                  </option>
-                  {books.map((book) => (
-                    <option key={book.id} value={book.id}>
-                      {book.title} - {book.author}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Source (Optional)
+              </label>
+              <Input
+                value={formData.sourceName}
+                onChange={(e) => setFormData({ ...formData, sourceName: e.target.value })}
+                placeholder="e.g., Pride and Prejudice"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -341,7 +224,6 @@ const Share = () => {
                 </Button>
               </div>
 
-              {/* Machine translation suggestion */}
               {(suggestion || isFetchingSuggestion) && (
                 <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <div className="flex items-center gap-2 mb-1">

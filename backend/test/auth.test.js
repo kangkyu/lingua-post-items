@@ -41,9 +41,9 @@ describe('Auth API', () => {
       );
 
       const res = await request(server)
-        .post('/books')
+        .post('/translations')
         .set('Authorization', `Bearer ${token}`)
-        .send({ title: 'Test Book', author: 'Test Author' });
+        .send({ originalText: 'x', translatedText: 'y', targetLanguage: 'en' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Token expired');
@@ -51,9 +51,9 @@ describe('Auth API', () => {
 
     it('rejects invalid JWT', async () => {
       const res = await request(server)
-        .post('/books')
+        .post('/translations')
         .set('Authorization', 'Bearer invalid-token')
-        .send({ title: 'Test Book', author: 'Test Author' });
+        .send({ originalText: 'x', translatedText: 'y', targetLanguage: 'en' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Invalid token');
@@ -61,8 +61,8 @@ describe('Auth API', () => {
 
     it('rejects request without Authorization header', async () => {
       const res = await request(server)
-        .post('/books')
-        .send({ title: 'Test Book', author: 'Test Author' });
+        .post('/translations')
+        .send({ originalText: 'x', translatedText: 'y', targetLanguage: 'en' });
 
       expect(res.status).toBe(401);
       expect(res.body.error).toBe('Authorization header missing');

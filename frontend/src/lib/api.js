@@ -36,10 +36,6 @@ export const translationService = {
     return await apiCall('/translations');
   },
 
-  async getTranslationsByBook(bookId) {
-    return await apiCall(`/translations/book/${bookId}`);
-  },
-
   async getTranslationById(id) {
     return await apiCall(`/translations/${id}`);
   },
@@ -61,26 +57,6 @@ export const translationService = {
         'Authorization': `Bearer ${sessionToken}`
       },
       body: JSON.stringify(translationData)
-    });
-  }
-};
-
-export const bookService = {
-  async getAllBooks() {
-    return await apiCall('/books');
-  },
-
-  async getBookById(id) {
-    return await apiCall(`/books/${id}`);
-  },
-
-  async createBook(bookData, sessionToken) {
-    return await apiCall('/books', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${sessionToken}`
-      },
-      body: JSON.stringify(bookData)
     });
   }
 };
@@ -107,14 +83,6 @@ export const bookmarkService = {
   async deleteBookmark(bookmarkId, sessionToken) {
     return await apiCall(`/bookmarks/${bookmarkId}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${sessionToken}`
-      }
-    });
-  },
-
-  async checkBookBookmark(bookId, sessionToken) {
-    return await apiCall(`/bookmarks/check-book?bookId=${bookId}`, {
       headers: {
         'Authorization': `Bearer ${sessionToken}`
       }

@@ -26,24 +26,14 @@ export default async function handler(req, res) {
         _count: {
           select: {
             translations: true,
-            books: true,
             bookmarks: true
           }
         }
       }
     });
 
-    // Get recent translations with book info
     const recentTranslations = await prisma.translation.findMany({
       where: { translatorId: user.id },
-      include: {
-        book: {
-          select: {
-            id: true,
-            title: true
-          }
-        }
-      },
       orderBy: { createdAt: 'desc' },
       take: 5
     });
@@ -58,7 +48,6 @@ export default async function handler(req, res) {
       },
       stats: {
         translationsCount: userData._count.translations,
-        booksCount: userData._count.books,
         bookmarksCount: userData._count.bookmarks
       },
       recentTranslations: recentTranslations.map(t => ({
@@ -67,8 +56,8 @@ export default async function handler(req, res) {
         translatedText: t.translatedText,
         sourceLanguage: t.sourceLanguage,
         targetLanguage: t.targetLanguage,
-        createdAt: t.createdAt,
-        book: t.book
+        sourceName: t.sourceName,
+        createdAt: t.createdAt
       }))
     };
 

@@ -4,13 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Home,
-  BookOpen,
   PlusCircle,
   Bookmark,
   User,
   Menu,
   X,
-  Globe,
   LogOut,
   ChevronDown
 } from 'lucide-react';
@@ -23,7 +21,6 @@ const Layout = ({ children }) => {
 
   const navigationItems = [
     { title: 'Feed', url: '/feed', icon: Home },
-    { title: 'Books', url: '/books', icon: BookOpen },
     { title: 'Share Translation', url: '/share', icon: PlusCircle },
     { title: 'My Bookmarks', url: '/bookmarks', icon: Bookmark },
   ];
