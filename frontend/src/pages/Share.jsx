@@ -17,12 +17,12 @@ const Share = () => {
   const isEditMode = !!editId;
 
   const [formData, setFormData] = useState({
-    sourceName: '',
-    originalText: '',
+    sourceName: searchParams.get('sourceName') || '',
+    originalText: searchParams.get('originalText') || '',
     translatedText: '',
-    sourceLanguage: 'en',
-    targetLanguage: 'ko',
-    context: ''
+    sourceLanguage: searchParams.get('sourceLanguage') || 'en',
+    targetLanguage: searchParams.get('targetLanguage') || 'ko',
+    context: searchParams.get('context') || ''
   });
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

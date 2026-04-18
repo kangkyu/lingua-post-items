@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Heart, MessageCircle, Bookmark, Search, Users, Edit } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Search, Users, Edit, Plus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { translationService, bookmarkService } from '@/lib/api';
 import CommentSection from '@/components/CommentSection';
@@ -265,7 +265,29 @@ const Feed = () => {
               <CardContent className="space-y-4">
                 {/* Original Text */}
                 <div className="p-4 bg-slate-50 rounded-lg">
-                  <h4 className="font-medium text-slate-700 mb-2">Original Text ({firstTranslation.sourceLanguage})</h4>
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <h4 className="font-medium text-slate-700">Original Text ({firstTranslation.sourceLanguage})</h4>
+                    {user && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-teal-600 hover:text-teal-700 h-7 px-2 shrink-0"
+                        onClick={() => {
+                          const params = new URLSearchParams({
+                            originalText: firstTranslation.originalText,
+                            sourceLanguage: firstTranslation.sourceLanguage,
+                            targetLanguage: firstTranslation.targetLanguage,
+                            ...(firstTranslation.sourceName ? { sourceName: firstTranslation.sourceName } : {}),
+                            ...(firstTranslation.context ? { context: firstTranslation.context } : {})
+                          });
+                          navigate(`/share?${params.toString()}`);
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add translation
+                      </Button>
+                    )}
+                  </div>
                   <p className="text-slate-900 leading-relaxed">{firstTranslation.originalText}</p>
                 </div>
 
