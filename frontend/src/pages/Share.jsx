@@ -15,14 +15,16 @@ const Share = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditMode = !!editId;
+  const templateId = searchParams.get('template');
+  const isPrefilled = !isEditMode && !!templateId;
 
   const [formData, setFormData] = useState({
-    sourceName: searchParams.get('sourceName') || '',
-    originalText: searchParams.get('originalText') || '',
+    sourceName: '',
+    originalText: '',
     translatedText: '',
-    sourceLanguage: searchParams.get('sourceLanguage') || 'en',
-    targetLanguage: searchParams.get('targetLanguage') || 'ko',
-    context: searchParams.get('context') || ''
+    sourceLanguage: 'en',
+    targetLanguage: 'ko',
+    context: ''
   });
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,30 +32,31 @@ const Share = () => {
   const [isFetchingSuggestion, setIsFetchingSuggestion] = useState(false);
 
   useEffect(() => {
-    if (isEditMode && editId) {
-      const loadTranslation = async () => {
-        try {
-          setIsLoadingTranslation(true);
-          const translation = await translationService.getTranslationById(editId);
-          setFormData({
-            sourceName: translation.sourceName || '',
-            originalText: translation.originalText,
-            translatedText: translation.translatedText,
-            sourceLanguage: translation.sourceLanguage,
-            targetLanguage: translation.targetLanguage,
-            context: translation.context || ''
-          });
-        } catch (error) {
-          console.error('Failed to load translation:', error);
-          alert('Failed to load translation. Please try again.');
-        } finally {
-          setIsLoadingTranslation(false);
-        }
-      };
+    const sourceTranslationId = editId || templateId;
+    if (!sourceTranslationId) return;
 
-      loadTranslation();
-    }
-  }, [isEditMode, editId]);
+    const loadTranslation = async () => {
+      try {
+        setIsLoadingTranslation(true);
+        const translation = await translationService.getTranslationById(sourceTranslationId);
+        setFormData({
+          sourceName: translation.sourceName || '',
+          originalText: translation.originalText,
+          translatedText: isEditMode ? translation.translatedText : '',
+          sourceLanguage: translation.sourceLanguage,
+          targetLanguage: translation.targetLanguage,
+          context: translation.context || ''
+        });
+      } catch (error) {
+        console.error('Failed to load translation:', error);
+        alert('Failed to load translation. Please try again.');
+      } finally {
+        setIsLoadingTranslation(false);
+      }
+    };
+
+    loadTranslation();
+  }, [isEditMode, editId, templateId]);
 
   const handleTranslate = async () => {
     if (!formData.originalText || !formData.targetLanguage) {
@@ -165,6 +168,8 @@ const Share = () => {
                 value={formData.sourceName}
                 onChange={(e) => setFormData({ ...formData, sourceName: e.target.value })}
                 placeholder="e.g., Pride and Prejudice"
+                readOnly={isPrefilled}
+                className={isPrefilled ? 'bg-slate-100 text-slate-600 cursor-not-allowed' : ''}
               />
             </div>
 
@@ -178,6 +183,8 @@ const Share = () => {
                   onChange={(e) => setFormData({ ...formData, sourceLanguage: e.target.value })}
                   placeholder="e.g., en"
                   required
+                  readOnly={isPrefilled}
+                  className={isPrefilled ? 'bg-slate-100 text-slate-600 cursor-not-allowed' : ''}
                 />
               </div>
               <div>
@@ -203,6 +210,8 @@ const Share = () => {
                 onChange={(e) => setFormData({ ...formData, originalText: e.target.value })}
                 placeholder="Enter the original text..."
                 required
+                readOnly={isPrefilled}
+                className={isPrefilled ? 'bg-slate-100 text-slate-600 cursor-not-allowed' : ''}
               />
             </div>
 
@@ -255,6 +264,8 @@ const Share = () => {
                 value={formData.context}
                 onChange={(e) => setFormData({ ...formData, context: e.target.value })}
                 placeholder="e.g., Chapter 3, Page 45"
+                readOnly={isPrefilled}
+                className={isPrefilled ? 'bg-slate-100 text-slate-600 cursor-not-allowed' : ''}
               />
             </div>
 

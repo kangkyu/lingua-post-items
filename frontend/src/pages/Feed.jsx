@@ -272,16 +272,7 @@ const Feed = () => {
                         variant="ghost"
                         size="sm"
                         className="text-teal-600 hover:text-teal-700 h-7 px-2 shrink-0"
-                        onClick={() => {
-                          const params = new URLSearchParams({
-                            originalText: firstTranslation.originalText,
-                            sourceLanguage: firstTranslation.sourceLanguage,
-                            targetLanguage: firstTranslation.targetLanguage,
-                            ...(firstTranslation.sourceName ? { sourceName: firstTranslation.sourceName } : {}),
-                            ...(firstTranslation.context ? { context: firstTranslation.context } : {})
-                          });
-                          navigate(`/share?${params.toString()}`);
-                        }}
+                        onClick={() => navigate(`/share?template=${firstTranslation.id}`)}
                       >
                         <Plus className="w-3 h-3 mr-1" />
                         Add translation
