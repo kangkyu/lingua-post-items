@@ -44,13 +44,6 @@
         "DIRECT_URL"
       ]
     },
-    "db:seed": {
-      "cache": false,
-      "env": [
-        "DATABASE_URL",
-        "DIRECT_URL"
-      ]
-    },
     "db:studio": {
       "cache": false,
       "persistent": true,

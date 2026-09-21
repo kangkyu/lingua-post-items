@@ -34,7 +34,7 @@ const Layout = ({ children }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                <img src="/lingua-logo.png" alt="Lingua" className="w-10 h-10" />
+                <span className="text-2xl" role="img" aria-label="Lingua">📚</span>
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-2xl font-bold text-slate-800">Lingua Post</h1>

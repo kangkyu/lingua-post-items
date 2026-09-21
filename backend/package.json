@@ -10,8 +10,6 @@
     "build": "npx prisma generate && npx prisma migrate deploy",
     "lint": "echo 'No lint configured for backend'",
     "db:push": "npx prisma db push",
-    "db:seed": "node prisma/seed.js",
-    "db:seed:simple": "node prisma/simple-seed.js",
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
     "test": "dotenv -f .env.test -- vitest run"

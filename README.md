@@ -75,9 +75,6 @@ npm install
 ```bash
 # Push schema to database
 npm run db:push
-
-# Seed with sample data (optional)
-npm run db:seed
 ```
 
 3. **Environment setup**:
@@ -121,7 +118,6 @@ npm run dev
 - `npm run dev:backend` - Start backend server only
 - `npm run build` - Build for production
 - `npm run db:push` - Push Prisma schema to database
-- `npm run db:seed` - Seed database with sample data
 - `npm run db:studio` - Open Prisma Studio
 
 ## Project Structure
@@ -215,9 +211,6 @@ npm run db:generate
 
 # Open database browser
 npm run db:studio
-
-# Seed with sample data
-npm run db:seed
 ```
 
 ### Database Migrations

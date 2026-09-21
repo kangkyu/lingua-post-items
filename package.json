@@ -20,12 +20,8 @@
     "frontend:dev": "turbo dev --filter=frontend",
     "frontend:build": "turbo build --filter=frontend",
     "db:push": "cd backend && npx prisma db push",
-    "db:seed": "cd backend && node prisma/seed.js",
     "db:studio": "cd backend && npx prisma studio",
     "postinstall": "cd backend && npx prisma generate"
-  },
-  "prisma": {
-    "seed": "cd backend && node prisma/seed.js"
   },
   "devDependencies": {
     "turbo": "^2.5.5"

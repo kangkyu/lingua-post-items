@@ -36,7 +36,6 @@ cd backend && npm run test
 
 ```bash
 npm run db:push     # Push Prisma schema to database
-npm run db:seed     # Seed with sample data
 npm run db:studio   # Open Prisma Studio GUI
 ```
 
