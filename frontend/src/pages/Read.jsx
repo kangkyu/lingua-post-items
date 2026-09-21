@@ -1,10 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { workService } from '@/lib/api';
 import { ChevronLeft, PlusCircle } from 'lucide-react';
 
-const TARGET_LANGUAGE = 'ko';
+// The languages offered as pills. Any other code still works via ?lang= --
+// add one here to give it a pill.
+const TARGET_LANGUAGES = ['ko', 'en', 'es', 'fr'];
+
+/**
+ * The target language lives in the URL (?lang=ko) so a reading link carries
+ * the language it was read in. There is no default: with no language the view
+ * shows every translation, whatever language it is in, and a pill narrows it.
+ */
+const useTargetLanguage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const language = searchParams.get('lang') || '';
+
+  // A language reached by ?lang= gets a pill too, so it can be switched away
+  // from and back.
+  const languages = language && !TARGET_LANGUAGES.includes(language)
+    ? [...TARGET_LANGUAGES, language]
+    : TARGET_LANGUAGES;
+
+  const setLanguage = (code) => {
+    const next = new URLSearchParams(searchParams);
+    if (code) next.set('lang', code);
+    else next.delete('lang');
+    setSearchParams(next, { replace: true });
+  };
+
+  return { language, languages, setLanguage };
+};
+
+const languageQuery = (language) => (language ? `?lang=${encodeURIComponent(language)}` : '');
+
+const LanguagePicker = ({ languages, language, onChange }) => (
+  <div className="flex items-center gap-2 flex-wrap">
+    <span className="text-xs text-slate-400 uppercase tracking-wider">Target</span>
+    <button
+      type="button"
+      onClick={() => onChange('')}
+      className={`px-2.5 py-1 rounded-md text-sm transition-colors ${
+        language === ''
+          ? 'bg-teal-50 text-teal-700 font-medium'
+          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+      }`}
+    >
+      all
+    </button>
+    {languages.map((code) => (
+      <button
+        key={code}
+        type="button"
+        onClick={() => onChange(code)}
+        className={`px-2.5 py-1 rounded-md text-sm transition-colors ${
+          code === language
+            ? 'bg-teal-50 text-teal-700 font-medium'
+            : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+        }`}
+      >
+        {code}
+      </button>
+    ))}
+  </div>
+);
 
 // Consecutive passages sharing a chapter become one run, headed once.
 const toChapterRuns = (passages) => {
@@ -17,7 +77,7 @@ const toChapterRuns = (passages) => {
   return runs;
 };
 
-const Shelf = () => {
+const Shelf = ({ language, languages, setLanguage }) => {
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,70 +87,88 @@ const Shelf = () => {
       try {
         setLoading(true);
         setError(null);
-        setWorks(await workService.getWorks(TARGET_LANGUAGE));
+        setWorks(await workService.getWorks(language || undefined));
       } catch (err) {
         console.error('Failed to fetch works:', err);
-        setError('작품을 불러오지 못했습니다. 다시 시도해 주세요.');
+        setError('Could not load works. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [language]);
 
-  if (loading) return <p className="text-center text-slate-500 py-12">불러오는 중…</p>;
-  if (error) return <p className="text-center text-red-500 py-12">{error}</p>;
+  // With a language chosen, a work you cannot read a word of in that language
+  // is noise; unfiltered, everything is worth listing.
+  const visibleWorks = language ? works.filter((work) => work.translatedCount > 0) : works;
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="font-reader text-3xl text-slate-900">한국어로 읽기</h1>
-        <p className="text-sm text-slate-500 mt-2">
-          번역문만 모아 한 권의 책처럼 읽습니다. 아직 번역되지 않은 문장은 직접 옮길 수 있습니다.
+        <h1 className="font-reader text-3xl text-slate-900">
+          {language ? `Read in ${language}` : 'Read translations'}
+        </h1>
+        <p className="text-sm text-slate-500 mt-2 mb-4">
+          {language
+            ? `The ${language} translations alone, read as a book. Passages nobody has translated yet are waiting for you.`
+            : 'Every translation, in every language. Pick a target language to read one straight through.'}
         </p>
+        <LanguagePicker languages={languages} language={language} onChange={setLanguage} />
       </div>
 
-      {works.length === 0 ? (
-        <p className="text-slate-500 py-12 text-center">아직 등록된 원문이 없습니다.</p>
-      ) : (
-        <ul className="divide-y divide-slate-200 border-y border-slate-200">
-          {works.map((work) => (
-            <li key={work.id}>
-              <Link
-                to={`/read/${work.id}`}
-                className="flex items-baseline justify-between gap-4 py-5 group"
-              >
-                <span className="font-reader text-xl text-slate-900 group-hover:text-teal-700 transition-colors">
-                  {work.title}
-                </span>
-                <span className="text-sm text-slate-400 shrink-0">
-                  {work.translatedCount}/{work.passageCount}문장 번역됨
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {loading && <p className="text-center text-slate-500 py-12">Loading…</p>}
+      {error && <p className="text-center text-red-500 py-12">{error}</p>}
+
+      {!loading && !error && (
+        visibleWorks.length === 0 ? (
+          <p className="text-slate-500 py-12 text-center">
+            {language
+              ? `Nothing has been translated into ${language} yet.`
+              : 'No source texts yet.'}
+          </p>
+        ) : (
+          <ul className="divide-y divide-slate-200 border-y border-slate-200">
+            {visibleWorks.map((work) => (
+              <li key={work.id}>
+                <Link
+                  to={`/read/${work.id}${languageQuery(language)}`}
+                  className="flex items-baseline justify-between gap-4 py-5 group"
+                >
+                  <span className="font-reader text-xl text-slate-900 group-hover:text-teal-700 transition-colors">
+                    {work.title}
+                    <span className="ml-2 text-xs text-slate-400 font-sans">{work.language}</span>
+                  </span>
+                  <span className="text-sm text-slate-400 shrink-0">
+                    {language
+                      ? `${work.translatedCount}/${work.passageCount} translated`
+                      : `${work.translationCount} translations · ${work.passageCount} passages`}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )
       )}
     </div>
   );
 };
 
-const UntranslatedPassage = ({ passage, user }) => (
+const UntranslatedPassage = ({ passage, user, language }) => (
   <p className="mb-5 indent-[1em] text-[1.05rem] leading-[2] text-slate-400 italic">
     {passage.text}
     {user && (
       <Link
-        to={`/share?passage=${passage.id}`}
+        to={`/share?passage=${passage.id}${language ? `&lang=${encodeURIComponent(language)}` : ''}`}
         className="not-italic inline-flex items-center gap-1 ml-2 text-xs text-teal-600 hover:text-teal-700 align-middle"
       >
         <PlusCircle className="w-3 h-3" />
-        번역하기
+        Translate
       </Link>
     )}
   </p>
 );
 
-const BookPage = ({ workId }) => {
+const BookPage = ({ workId, language, languages, setLanguage }) => {
   const { user } = useAuth();
   const [work, setWork] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -101,47 +179,50 @@ const BookPage = ({ workId }) => {
       try {
         setLoading(true);
         setError(null);
-        setWork(await workService.getWork(workId, TARGET_LANGUAGE));
+        setWork(await workService.getWork(workId, language || undefined));
       } catch (err) {
         console.error('Failed to fetch work:', err);
-        setError('그 작품을 찾을 수 없습니다.');
+        setError('That work could not be found.');
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [workId]);
+  }, [workId, language]);
 
-  if (loading) return <p className="text-center text-slate-500 py-12">불러오는 중…</p>;
+  if (loading) return <p className="text-center text-slate-500 py-12">Loading…</p>;
 
   if (error || !work) {
     return (
       <div className="max-w-3xl mx-auto py-12 text-center">
-        <p className="text-slate-500">{error || '작품을 찾을 수 없습니다.'}</p>
+        <p className="text-slate-500">{error || 'Work not found.'}</p>
         <Link to="/read" className="text-teal-600 hover:underline text-sm mt-4 inline-block">
-          목록으로 돌아가기
+          Back to the list
         </Link>
       </div>
     );
   }
 
+  const backTo = `/read/${work.id}${languageQuery(language)}`;
+
   return (
     <div className="max-w-2xl mx-auto">
-      <Link
-        to="/read"
-        className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        목록
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          to={`/read${languageQuery(language)}`}
+          className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          All works
+        </Link>
+        <LanguagePicker languages={languages} language={language} onChange={setLanguage} />
+      </div>
 
       <header className="text-center py-12 border-b border-slate-200 mb-12">
         <h1 className="font-reader text-4xl text-slate-900 leading-snug">{work.title}</h1>
-        {work.translatedCount < work.passageCount && (
-          <p className="text-xs text-slate-400 mt-4">
-            {work.passageCount}문장 중 {work.translatedCount}문장 번역됨
-          </p>
-        )}
+        <p className="text-xs text-slate-400 mt-4">
+          {work.language} → {language || 'any language'} · {work.translatedCount}/{work.passageCount} passages translated
+        </p>
       </header>
 
       <article className="font-reader text-slate-900">
@@ -158,7 +239,14 @@ const BookPage = ({ workId }) => {
               const [reading, ...alternatives] = passage.translations;
 
               if (!reading) {
-                return <UntranslatedPassage key={passage.id} passage={passage} user={user} />;
+                return (
+                  <UntranslatedPassage
+                    key={passage.id}
+                    passage={passage}
+                    user={user}
+                    language={language}
+                  />
+                );
               }
 
               return (
@@ -168,17 +256,24 @@ const BookPage = ({ workId }) => {
                 >
                   <Link
                     to={`/translations/${reading.id}`}
-                    state={{ from: `/read/${work.id}` }}
+                    state={{ from: backTo }}
                     className="decoration-slate-300 underline-offset-[6px] hover:underline hover:text-teal-800 transition-colors"
                   >
                     {reading.translatedText}
                   </Link>
+                  {/* Without a language filter the prose is mixed, so each
+                      line says which language it is in. */}
+                  {!language && (
+                    <span className="ml-2 align-super text-[0.65rem] text-slate-400 font-sans">
+                      {reading.targetLanguage}
+                    </span>
+                  )}
                   {alternatives.length > 0 && (
                     <Link
                       to={`/translations/${reading.id}`}
-                      state={{ from: `/read/${work.id}` }}
-                      className="ml-2 align-super text-[0.65rem] text-slate-400 hover:text-teal-600 no-underline"
-                      title={`이 문장의 번역 ${passage.translations.length}개`}
+                      state={{ from: backTo }}
+                      className="ml-1 align-super text-[0.65rem] text-slate-400 hover:text-teal-600 no-underline"
+                      title={`${passage.translations.length} translations of this passage`}
                     >
                       +{alternatives.length}
                     </Link>
@@ -191,7 +286,7 @@ const BookPage = ({ workId }) => {
       </article>
 
       <footer className="border-t border-slate-200 pt-6 pb-12 text-center">
-        <p className="text-xs text-slate-400">{work.passageCount}문장</p>
+        <p className="text-xs text-slate-400">{work.passageCount} passages</p>
       </footer>
     </div>
   );
@@ -199,7 +294,13 @@ const BookPage = ({ workId }) => {
 
 const Read = () => {
   const { workId } = useParams();
-  return workId ? <BookPage workId={workId} /> : <Shelf />;
+  const { language, languages, setLanguage } = useTargetLanguage();
+
+  return workId ? (
+    <BookPage workId={workId} language={language} languages={languages} setLanguage={setLanguage} />
+  ) : (
+    <Shelf language={language} languages={languages} setLanguage={setLanguage} />
+  );
 };
 
 export default Read;

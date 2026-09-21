@@ -26,7 +26,7 @@ const Share = () => {
     originalText: '',
     translatedText: '',
     sourceLanguage: 'en',
-    targetLanguage: 'ko',
+    targetLanguage: '', // set deliberately -- there is no default target language
     context: ''
   });
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
@@ -47,6 +47,8 @@ const Share = () => {
           originalText: passage.text,
           translatedText: '',
           sourceLanguage: passage.work.language,
+          // Carry over the language the reader was reading in.
+          targetLanguage: searchParams.get('lang') || prev.targetLanguage,
           context: passage.context || ''
         }));
       } catch (error) {
@@ -58,7 +60,7 @@ const Share = () => {
     };
 
     loadPassage();
-  }, [passageId]);
+  }, [passageId, searchParams]);
 
   useEffect(() => {
     const sourceTranslationId = editId || templateId;

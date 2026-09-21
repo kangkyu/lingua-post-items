@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
     { title: 'Feed', url: '/feed', icon: Home },
     { title: 'Share Translation', url: '/share', icon: PlusCircle },
     { title: 'My Bookmarks', url: '/bookmarks', icon: Bookmark },
-    { title: '한국어로 읽기', url: '/read', icon: BookOpen },
+    { title: 'Read in Target language', url: '/read', icon: BookOpen },
   ];
 
   return (

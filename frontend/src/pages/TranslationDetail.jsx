@@ -20,7 +20,7 @@ const TranslationDetail = () => {
 
   // Set by the reading view so "back" returns to the book being read.
   const backTo = location.state?.from || '/feed';
-  const backLabel = location.state?.from ? '책으로 돌아가기' : 'Back to feed';
+  const backLabel = location.state?.from ? 'Back to the book' : 'Back to feed';
 
   useEffect(() => {
     const load = async () => {
