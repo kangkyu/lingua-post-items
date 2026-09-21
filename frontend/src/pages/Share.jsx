@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { translationService } from '@/lib/api';
+import { translationService, passageService } from '@/lib/api';
 import { API_BASE_URL } from '@/lib/config.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,10 @@ const Share = () => {
   const editId = searchParams.get('edit');
   const isEditMode = !!editId;
   const templateId = searchParams.get('template');
-  const isPrefilled = !isEditMode && !!templateId;
+  // Translating an existing passage: the source text is fixed and shared, so
+  // the new translation attaches to it by id rather than by re-typing it.
+  const passageId = searchParams.get('passage');
+  const isPrefilled = !isEditMode && (!!templateId || !!passageId);
 
   const [formData, setFormData] = useState({
     sourceName: '',
@@ -30,6 +33,32 @@ const Share = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestion, setSuggestion] = useState('');
   const [isFetchingSuggestion, setIsFetchingSuggestion] = useState(false);
+
+  useEffect(() => {
+    if (!passageId) return;
+
+    const loadPassage = async () => {
+      try {
+        setIsLoadingTranslation(true);
+        const passage = await passageService.getPassage(passageId);
+        setFormData((prev) => ({
+          ...prev,
+          sourceName: passage.work.title,
+          originalText: passage.text,
+          translatedText: '',
+          sourceLanguage: passage.work.language,
+          context: passage.context || ''
+        }));
+      } catch (error) {
+        console.error('Failed to load passage:', error);
+        alert('Failed to load that passage. Please try again.');
+      } finally {
+        setIsLoadingTranslation(false);
+      }
+    };
+
+    loadPassage();
+  }, [passageId]);
 
   useEffect(() => {
     const sourceTranslationId = editId || templateId;
@@ -110,6 +139,7 @@ const Share = () => {
     setIsSubmitting(true);
     try {
       const translationData = {
+        passageId: passageId ? parseInt(passageId, 10) : undefined,
         originalText: formData.originalText,
         translatedText: formData.translatedText,
         sourceLanguage: formData.sourceLanguage,

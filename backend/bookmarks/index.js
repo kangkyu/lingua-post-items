@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js';
 import { authenticateUser } from '../auth/middleware.js';
+import { translationInclude, serializeTranslation } from '../lib/serialize.js';
 
 export default async function handler(req, res) {
   const authResult = await authenticateUser(req, res);
@@ -17,17 +18,7 @@ export default async function handler(req, res) {
       const bookmarks = await prisma.bookmark.findMany({
         where: { userId: user.id },
         include: {
-          translation: {
-            include: {
-              translator: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
+          translation: { include: translationInclude }
         },
         orderBy: {
           createdAt: 'desc'
@@ -38,7 +29,7 @@ export default async function handler(req, res) {
         .filter(b => b.translation)
         .map(b => ({
           bookmarkId: b.id,
-          ...b.translation,
+          ...serializeTranslation(b.translation),
           bookmarkedAt: b.createdAt
         }));
 

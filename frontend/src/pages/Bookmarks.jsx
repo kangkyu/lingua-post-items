@@ -81,7 +81,14 @@ const Bookmarks = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       {translation.sourceName && (
-                        <CardTitle className="text-lg text-slate-800">{translation.sourceName}</CardTitle>
+                        <CardTitle className="text-lg">
+                          <Link
+                            to={`/translations/${translation.id}`}
+                            className="text-slate-800 hover:text-teal-700 transition-colors"
+                          >
+                            {translation.sourceName}
+                          </Link>
+                        </CardTitle>
                       )}
                       <p className="text-xs text-slate-500 mt-1">
                         Bookmarked on {new Date(translation.bookmarkedAt).toLocaleDateString()}
@@ -101,10 +108,17 @@ const Bookmarks = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-200">
                     <div className="text-xs text-slate-500">
-                      {translation.context} • by {translation.translator?.name || translation.createdBy || 'Anonymous'} • {new Date(translation.createdAt).toLocaleDateString()}
+                      {translation.context && `${translation.context} • `}
+                      by {translation.createdBy || 'Anonymous'} • {new Date(translation.createdAt).toLocaleDateString()}
                     </div>
+                    <Link
+                      to={`/translations/${translation.id}`}
+                      className="text-xs text-teal-600 hover:text-teal-700 hover:underline shrink-0"
+                    >
+                      Open translation →
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

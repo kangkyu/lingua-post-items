@@ -6,6 +6,8 @@ import Feed from '@/pages/Feed';
 import Share from '@/pages/Share';
 import Profile from '@/pages/Profile';
 import Bookmarks from '@/pages/Bookmarks';
+import Read from '@/pages/Read';
+import TranslationDetail from '@/pages/TranslationDetail';
 import AuthCallback from '@/pages/AuthCallback';
 
 function App() {
@@ -26,6 +28,9 @@ function App() {
                 <Route path="/dashboard" element={<Profile />} />
                 <Route path="/profile/:userId" element={<Profile />} />
                 <Route path="/bookmarks" element={<Bookmarks />} />
+                <Route path="/read" element={<Read />} />
+                <Route path="/read/:workId" element={<Read />} />
+                <Route path="/translations/:id" element={<TranslationDetail />} />
               </Routes>
             </Layout>
           } />

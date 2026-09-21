@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js';
 import { authenticateUser } from '../auth/middleware.js';
+import { translationInclude, serializeTranslation } from '../lib/serialize.js';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -8,15 +9,7 @@ export default async function handler(req, res) {
     try {
       const translation = await prisma.translation.findUnique({
         where: { id: parseInt(id) },
-        include: {
-          translator: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
+        include: translationInclude,
       });
 
       if (!translation) {
@@ -25,23 +18,8 @@ export default async function handler(req, res) {
         return;
       }
 
-      const response = {
-        id: translation.id,
-        originalText: translation.originalText,
-        translatedText: translation.translatedText,
-        sourceLanguage: translation.sourceLanguage,
-        targetLanguage: translation.targetLanguage,
-        sourceName: translation.sourceName,
-        context: translation.context,
-        chapter: translation.chapter,
-        pageNumber: translation.pageNumber,
-        createdAt: translation.createdAt,
-        createdBy: translation.translator.name || translation.translator.email,
-        createdDate: translation.createdAt.toLocaleDateString()
-      };
-
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(response));
+      res.end(JSON.stringify(serializeTranslation(translation)));
     } catch (error) {
       console.error('Error fetching translation:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -75,65 +53,26 @@ export default async function handler(req, res) {
         return;
       }
 
-      const {
-        originalText,
-        translatedText,
-        sourceLanguage,
-        targetLanguage,
-        sourceName,
-        context,
-        chapter,
-        pageNumber
-      } = req.body;
+      const { translatedText, targetLanguage } = req.body;
 
-      if (!originalText || !translatedText || !targetLanguage) {
+      if (!translatedText || !targetLanguage) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-          error: 'Missing required fields: originalText, translatedText, and targetLanguage are required'
+          error: 'Missing required fields: translatedText and targetLanguage are required'
         }));
         return;
       }
 
+      // The source text belongs to the passage and is shared with everyone
+      // else translating it, so editing a translation cannot change it.
       const translation = await prisma.translation.update({
         where: { id: parseInt(id) },
-        data: {
-          originalText,
-          translatedText,
-          sourceLanguage: sourceLanguage || 'en',
-          targetLanguage,
-          sourceName: sourceName || null,
-          context,
-          chapter,
-          pageNumber: pageNumber ? parseInt(pageNumber) : null
-        },
-        include: {
-          translator: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
+        data: { text: translatedText, targetLanguage },
+        include: translationInclude,
       });
 
-      const response = {
-        id: translation.id,
-        originalText: translation.originalText,
-        translatedText: translation.translatedText,
-        sourceLanguage: translation.sourceLanguage,
-        targetLanguage: translation.targetLanguage,
-        sourceName: translation.sourceName,
-        context: translation.context,
-        chapter: translation.chapter,
-        pageNumber: translation.pageNumber,
-        createdAt: translation.createdAt,
-        createdBy: translation.translator.name || translation.translator.email,
-        createdDate: translation.createdAt.toLocaleDateString()
-      };
-
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(response));
+      res.end(JSON.stringify(serializeTranslation(translation)));
     } catch (error) {
       console.error('Error updating translation:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });

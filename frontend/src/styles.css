@@ -1,2 +1,8 @@
 @import "tailwindcss";
 
+@theme {
+  /* Reading view: Korean serif first, so translated text looks like a printed
+     book rather than UI copy. All stack entries are system/pre-installed
+     faces -- no webfont request. */
+  --font-reader: "Nanum Myeongjo", "Noto Serif KR", AppleMyungjo, Batang, "Times New Roman", serif;
+}

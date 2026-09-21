@@ -1,61 +1,54 @@
 import prisma from '../lib/prisma.js';
 import { authenticateUser } from '../auth/middleware.js';
+import { translationInclude, serializeTranslation } from '../lib/serialize.js';
+
+/**
+ * Find the passage this translation belongs to, creating the work and the
+ * passage if this is the first time anyone has entered that source text.
+ */
+async function findOrCreatePassage({ originalText, sourceLanguage, sourceName, context, chapter, pageNumber }) {
+  const title = (sourceName || '').trim() || 'Untitled';
+  const language = sourceLanguage || 'en';
+
+  const work = await prisma.work.upsert({
+    where: { title_language: { title, language } },
+    update: {},
+    create: { title, language },
+  });
+
+  const existing = await prisma.passage.findFirst({
+    where: { workId: work.id, text: originalText },
+  });
+  if (existing) return existing;
+
+  const last = await prisma.passage.findFirst({
+    where: { workId: work.id },
+    orderBy: { position: 'desc' },
+    select: { position: true },
+  });
+
+  return prisma.passage.create({
+    data: {
+      workId: work.id,
+      text: originalText,
+      position: (last?.position ?? 0) + 1,
+      context: context || null,
+      chapter: chapter || null,
+      pageNumber: pageNumber ? parseInt(pageNumber) : null,
+    },
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      const translationCount = await prisma.translation.count();
-
-      if (translationCount === 0) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify([]));
-        return;
-      }
-
       const translations = await prisma.translation.findMany({
-        include: {
-          translator: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          },
-          bookmarks: {
-            select: {
-              id: true
-            }
-          },
-          _count: {
-            select: { comments: true }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
+        include: translationInclude,
+        orderBy: { createdAt: 'desc' },
       });
 
-      const transformedTranslations = translations.map(translation => ({
-        id: translation.id,
-        originalText: translation.originalText,
-        translatedText: translation.translatedText,
-        sourceLanguage: translation.sourceLanguage,
-        targetLanguage: translation.targetLanguage,
-        sourceName: translation.sourceName,
-        context: translation.context,
-        chapter: translation.chapter,
-        pageNumber: translation.pageNumber,
-        createdAt: translation.createdAt,
-        createdBy: translation.translator.name || 'Anonymous',
-        translatorId: translation.translator.id,
-        createdDate: translation.createdAt.toLocaleDateString(),
-        likesCount: 0, // TODO: Implement likes system
-        commentsCount: translation._count.comments,
-        tags: [translation.sourceLanguage, translation.targetLanguage]
-      }));
-
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(transformedTranslations));
+      res.end(JSON.stringify(translations.map(serializeTranslation)));
     } catch (error) {
       console.error('Error fetching translations:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -74,6 +67,7 @@ export default async function handler(req, res) {
 
     try {
       const {
+        passageId,
         originalText,
         translatedText,
         sourceLanguage,
@@ -84,61 +78,49 @@ export default async function handler(req, res) {
         pageNumber
       } = req.body;
 
-      if (!originalText || !translatedText || !targetLanguage) {
+      if (!translatedText || !targetLanguage || (!passageId && !originalText)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-          error: 'Missing required fields: originalText, translatedText, and targetLanguage are required'
+          error: 'Missing required fields: translatedText, targetLanguage, and either passageId or originalText are required'
         }));
         return;
       }
 
+      // Translating an existing passage is the common case once a work has
+      // been added; originalText creates the passage on the fly.
+      let passage;
+      if (passageId) {
+        passage = await prisma.passage.findUnique({ where: { id: parseInt(passageId) } });
+        if (!passage) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Passage not found' }));
+          return;
+        }
+      } else {
+        passage = await findOrCreatePassage({
+          originalText, sourceLanguage, sourceName, context, chapter, pageNumber
+        });
+      }
+
       const translation = await prisma.translation.create({
         data: {
-          originalText,
-          translatedText,
-          sourceLanguage: sourceLanguage || 'en',
+          passageId: passage.id,
+          text: translatedText,
           targetLanguage,
-          sourceName: sourceName || null,
-          context,
-          chapter,
-          pageNumber: pageNumber ? parseInt(pageNumber) : null,
-          translatorId: user.id
+          translatorId: user.id,
         },
-        include: {
-          translator: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
+        include: translationInclude,
       });
 
-      const response = {
-        id: translation.id,
-        originalText: translation.originalText,
-        translatedText: translation.translatedText,
-        sourceLanguage: translation.sourceLanguage,
-        targetLanguage: translation.targetLanguage,
-        sourceName: translation.sourceName,
-        context: translation.context,
-        chapter: translation.chapter,
-        pageNumber: translation.pageNumber,
-        createdAt: translation.createdAt,
-        createdBy: translation.translator.name || translation.translator.email,
-        createdDate: translation.createdAt.toLocaleDateString()
-      };
-
       res.writeHead(201, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(response));
+      res.end(JSON.stringify(serializeTranslation(translation)));
     } catch (error) {
       console.error('Error creating translation:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to create translation' }));
     }
   } else {
-    res.writeHead(405, { 'Allow': 'GET, POST' });
-    res.end(`Method ${req.method} Not Allowed`);
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
   }
 }

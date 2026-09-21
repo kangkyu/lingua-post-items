@@ -42,25 +42,62 @@ model Session {
   @@map("sessions")
 }
 
-model Translation {
-  id           Int   @id @default(autoincrement())
-  originalText String @map("original_text")
-  translatedText String @map("translated_text")
-  sourceLanguage String @default("en") @map("source_language")
-  targetLanguage String @map("target_language")
-  sourceName   String? @map("source_name")
-  context      String?
-  chapter      String?
-  pageNumber   Int? @map("page_number")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+/// A source text: one book, essay or article in its original language.
+model Work {
+  id        Int      @id @default(autoincrement())
+  title     String
+  language  String   @default("en")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  translatorId Int @map("translator_id")
-  translator   User      @relation(fields: [translatorId], references: [id], onDelete: Cascade)
+  passages Passage[]
+
+  @@unique([title, language])
+  @@map("works")
+}
+
+/// One sentence or paragraph of a Work, in the original language. A passage
+/// exists whether or not anyone has translated it yet, which is what makes an
+/// untranslated chapter something the app can hold.
+model Passage {
+  id         Int      @id @default(autoincrement())
+  text       String
+  position   Int
+  chapter    String?
+  pageNumber Int?     @map("page_number")
+  context    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  workId       Int  @map("work_id")
+  work         Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  translations Translation[]
+
+  @@unique([workId, position])
+  @@index([workId])
+  @@map("passages")
+}
+
+/// One person's rendering of one Passage. Several may exist for the same
+/// passage and language -- that is the point, not a conflict.
+model Translation {
+  id             Int      @id @default(autoincrement())
+  text           String
+  targetLanguage String   @map("target_language")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  passageId    Int     @map("passage_id")
+  passage      Passage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  translatorId Int     @map("translator_id")
+  translator   User    @relation(fields: [translatorId], references: [id], onDelete: Cascade)
   bookmarks    Bookmark[]
   comments     Comment[]
 
+  @@index([passageId])
   @@map("translations")
 }
 

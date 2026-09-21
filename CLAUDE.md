@@ -48,9 +48,9 @@ npm run db:studio   # Open Prisma Studio GUI
 ### Backend API Pattern
 
 The backend uses a **raw Node.js HTTP server** (not Express) with a custom file-based routing system (`backend/dev-server.js`). Routes are determined by file paths:
-- `backend/books/index.js` → `GET /books`
-- `backend/books/[id].js` → `GET /books/:id` (dynamic parameter extracted from bracket syntax into `req.query`)
-- `backend/translations/book/[bookId].js` → `GET /translations/book/:bookId`
+- `backend/works/index.js` → `GET /works`
+- `backend/works/[id].js` → `GET /works/:id` (dynamic parameter extracted from bracket syntax into `req.query`)
+- `backend/passages/[id].js` → `GET /passages/:id`
 
 Each route file exports a default async handler: `export default async function handler(req, res)`. The `res` object uses raw Node.js methods (`res.writeHead(status, headers)`, `res.end(JSON.stringify(data))`), not Express helpers. CORS is handled automatically by the server. Query params are in `req.query`, parsed JSON body in `req.body`.
 
@@ -71,19 +71,26 @@ const user = authResult.user;
 
 - **Routing**: React Router v7 in `App.jsx`
 - **State Management**: React Context for auth (`contexts/AuthContext.jsx`), session in localStorage
-- **API calls**: `lib/api.js` - native `fetch()` client with `VITE_API_ROOT_URL` base URL. Service modules: `translationService`, `bookService`, `bookmarkService`, `profileService`, `userService`
+- **API calls**: `lib/api.js` - native `fetch()` client with `VITE_API_ROOT_URL` base URL. Service modules: `translationService`, `workService`, `passageService`, `bookmarkService`, `commentService`, `profileService`, `userService`
 - **Path alias**: `@` → `./src` (configured in `vite.config.js`)
 - **Auth flow**: Google OAuth → backend validates token → returns JWT → stored in localStorage
 
 ### Database Schema (Prisma)
 
-Core models: `User`, `Session`, `Book`, `Translation`, `Bookmark`
-- Users own Books and Translations
-- Translations belong to Books with language pairs (source/target), plus context, chapter, page number
-- Bookmarks use nullable foreign keys to reference either a Translation or a Book (exclusive)
-- Composite unique constraints on bookmarks: `(userId, translationId)` and `(userId, bookId)`
-- Cascade deletes on all foreign keys
+Core models: `User`, `Session`, `Work`, `Passage`, `Translation`, `Bookmark`, `Comment`
+
+The source text is separate from the translations of it:
+
+- **`Work`** — one source text in its original language. Unique on `(title, language)`, so the same title in two languages is two works.
+- **`Passage`** — one sentence/paragraph of a Work, in the original language, ordered by `position` (unique per work), with optional `chapter`, `pageNumber`, `context`. **A passage can have zero translations** — that is how an untranslated chapter is represented.
+- **`Translation`** — one person's rendering of one Passage (`text`, `targetLanguage`, `translatorId`). Several translations of the same passage and language are expected, not a conflict; that is the comparison the feed shows.
+- `Bookmark` and `Comment` point at a Translation. Composite unique on bookmarks: `(userId, translationId)`.
+- Cascade deletes on all foreign keys.
 - Prisma client is a singleton via `backend/lib/prisma.js` (uses `globalThis` to prevent multiple instances in dev)
+
+Routes returning translations use `translationInclude` / `serializeTranslation` from `backend/lib/serialize.js`, which flattens Work + Passage + Translation into one object (`originalText`, `translatedText`, `sourceName`, `sourceLanguage`, plus `passageId`/`workId`). Group translations by `passageId`, never by comparing `originalText` strings.
+
+**Migration history is not a source of truth.** The schema was evolved with `prisma db push`, so `prisma/migrations/20250723082325_init` does not describe the live database (it has TEXT ids, camelCase columns and a `books` table; production has SERIAL ids, snake_case and a `comments` table). A fresh environment cannot be built by replaying these migrations.
 
 ## Environment Variables
 
@@ -100,6 +107,12 @@ Core models: `User`, `Session`, `Book`, `Translation`, `Bookmark`
 
 ## Deployment
 
-Both frontend and backend deploy automatically when pushing to GitHub:
-- **Frontend**: Firebase Hosting (SPA rewrite to `/index.html`)
-- **Backend**: Firebase App Hosting (`apphosting.yaml`) — builds Prisma, runs migrations, starts `node server.js`
+Only the backend deploys automatically. There are no GitHub Actions workflows in this repo.
+
+- **Backend**: Firebase App Hosting (`apphosting.yaml`), backend id `lingua-stagify-backend`. Deploys on push to `master` — runs `prisma generate`, then `prisma migrate deploy`, then `node server.js`. Pending migrations are applied to the production database on every deploy.
+- **Frontend**: Firebase Hosting (SPA rewrite to `/index.html`). **Manual** — a push does nothing. Deploy with:
+  ```bash
+  cd frontend && npm run build && cd ..
+  firebase deploy --only hosting
+  ```
+  A frontend change merged to `master` is not live until this is run.

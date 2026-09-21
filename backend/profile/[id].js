@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { translationInclude, serializeTranslation } from '../lib/serialize.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -35,6 +36,7 @@ export default async function handler(req, res) {
     }
 
     const recentTranslations = await prisma.translation.findMany({
+      include: translationInclude,
       where: { translatorId: userId },
       orderBy: { createdAt: 'desc' },
       take: 5
@@ -50,15 +52,7 @@ export default async function handler(req, res) {
       stats: {
         translationsCount: userData._count.translations
       },
-      recentTranslations: recentTranslations.map(t => ({
-        id: t.id,
-        originalText: t.originalText,
-        translatedText: t.translatedText,
-        sourceLanguage: t.sourceLanguage,
-        targetLanguage: t.targetLanguage,
-        sourceName: t.sourceName,
-        createdAt: t.createdAt
-      }))
+      recentTranslations: recentTranslations.map(serializeTranslation)
     };
 
     res.writeHead(200, { 'Content-Type': 'application/json' });

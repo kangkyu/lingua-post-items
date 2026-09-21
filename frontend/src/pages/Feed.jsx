@@ -112,7 +112,10 @@ const Feed = () => {
   });
 
   const groupedTranslations = filteredTranslations.reduce((groups, translation) => {
-    const key = `${translation.sourceName || ''}|||${translation.originalText}|||${translation.targetLanguage}`;
+    // Same passage + same target language = renderings to compare. This is a
+    // foreign key now, so fixing a typo in a source text no longer splits a
+    // group in two.
+    const key = `${translation.passageId}|||${translation.targetLanguage}`;
     if (!groups[key]) {
       groups[key] = [];
     }

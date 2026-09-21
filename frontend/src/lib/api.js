@@ -61,6 +61,24 @@ export const translationService = {
   }
 };
 
+export const workService = {
+  async getWorks(targetLanguage) {
+    const query = targetLanguage ? `?targetLanguage=${encodeURIComponent(targetLanguage)}` : '';
+    return await apiCall(`/works${query}`);
+  },
+
+  async getWork(id, targetLanguage) {
+    const query = targetLanguage ? `?targetLanguage=${encodeURIComponent(targetLanguage)}` : '';
+    return await apiCall(`/works/${id}${query}`);
+  }
+};
+
+export const passageService = {
+  async getPassage(id) {
+    return await apiCall(`/passages/${id}`);
+  }
+};
+
 export const bookmarkService = {
   async getBookmarks(sessionToken) {
     return await apiCall('/bookmarks', {
